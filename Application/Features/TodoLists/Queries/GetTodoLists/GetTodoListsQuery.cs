@@ -1,0 +1,27 @@
+using Application.Common.Interfaces;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace Application.Features.TodoLists.Queries.GetTodoLists;
+
+public record GetTodoListsQuery : IRequest<List<TodoListDto>>;
+
+public class GetTodoListsQueryHandler(IApplicationDbContext context,ILogger<GetTodoListsQueryHandler> logger, IConfigurationProvider mapperConfiguration)
+    : IRequestHandler<GetTodoListsQuery, List<TodoListDto>>
+{
+    public Task<List<TodoListDto>> Handle(GetTodoListsQuery request, CancellationToken cancellationToken)
+    {
+        var result =context.TodoLists
+            .OrderBy(l => l.Title)
+            .ProjectTo<TodoListDto>(mapperConfiguration)
+            .ToListAsync(cancellationToken);
+        
+        logger.LogWarning("Executed query {@Query} with {@Result}", request, result);
+        
+        return result;  
+    }
+        
+}
