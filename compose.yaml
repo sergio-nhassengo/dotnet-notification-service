@@ -1,0 +1,31 @@
+﻿services:
+  api:
+    image: api
+    build:
+      context: .
+      dockerfile: Api/Dockerfile
+
+  application:
+    image: application
+    build:
+      context: .
+      dockerfile: Application/Dockerfile
+
+  domain:
+    image: domain
+    build:
+      context: .
+      dockerfile: Domain/Dockerfile
+
+  infra:
+    image: infra
+    build:
+      context: .
+      dockerfile: Infra/Dockerfile
+
+  persistence:
+    image: persistence
+    build:
+      context: .
+      dockerfile: Persistence/Dockerfile
+

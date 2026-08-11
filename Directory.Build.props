@@ -1,0 +1,15 @@
+<Project>
+
+    <!--
+      AutoMapper 14.0.0 is the last version under the free MIT license (15+ requires a
+      commercial license). It carries an unpatched high-severity DoS advisory
+      (GHSA-rvv3-g6hj-g44x / CVE-2026-32933 - deeply nested object graphs can exhaust the
+      stack, no patch coming for the 14.x line). Accepted as a known, deliberate risk for
+      this template rather than silently warned about on every build. Applies to every
+      project since it's a transitive warning wherever Application is referenced.
+    -->
+    <ItemGroup>
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-rvv3-g6hj-g44x" />
+    </ItemGroup>
+
+</Project>
