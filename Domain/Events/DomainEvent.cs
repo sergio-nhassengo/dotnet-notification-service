@@ -1,3 +1,5 @@
+using System;
+
 namespace Domain.Events;
 
 public abstract class DomainEvent

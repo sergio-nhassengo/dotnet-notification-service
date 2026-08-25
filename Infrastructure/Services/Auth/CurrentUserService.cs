@@ -1,8 +1,10 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using Application.Common.Security;
 using Microsoft.AspNetCore.Http;
 
-namespace Infrastructure;
+namespace Infrastructure.Services.Auth;
 
 public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {
