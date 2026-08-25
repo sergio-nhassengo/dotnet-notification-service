@@ -1,8 +1,9 @@
 using Application;
-using ApiTemplate.ExceptionHandlers;
-using Infra;
-using Infra.Extensions.Cors;
-using Infra.Extensions.Logs;
+using MPDCApiTemplate.ExceptionHandlers;
+using Infrastructure;
+using Infrastructure.Extensions.Cors;
+using Infrastructure.Extensions.Logs;
+using Microsoft.AspNetCore.Authorization;
 using Persistence;
 using Serilog;
 using Serilog.Events;
@@ -27,15 +28,11 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    
-}
+app.MapOpenApi().WithMetadata(new AllowAnonymousAttribute());
 
 app.UseSwaggerUI(options =>
 {
-    options.SwaggerEndpoint("/openapi/v1.json", "ApiTemplate v1");
+    options.SwaggerEndpoint("/openapi/v1.json", "MPDCApiTemplate v1");
 });
 
 app.UseExceptionHandler();

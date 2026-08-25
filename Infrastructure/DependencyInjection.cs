@@ -1,12 +1,12 @@
 using Application.Common.Interfaces;
 using Application.Common.Security;
-using Infra.Extensions.Auth;
-using Infra.Extensions.Cors;
-using Infra.Extensions.Telemetry;
+using Infrastructure.Extensions.Auth;
+using Infrastructure.Extensions.Cors;
+using Infrastructure.Extensions.Telemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Infra;
+namespace Infrastructure;
 
 public static class DependencyInjection
 {

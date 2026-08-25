@@ -1,10 +1,11 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Infra.Extensions.Auth;
+namespace Infrastructure.Extensions.Auth;
 
 public static class AuthExtension
 {
@@ -34,6 +35,13 @@ public static class AuthExtension
         services.AddAuthorizationBuilder()
             .AddPolicy(AuthPolicies.RequireAdmin, policy => policy.RequireRole("Admin"));
 
+        services.AddAuthorization(options =>
+        {
+            options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+        });
+        
         return services;
     }
 }

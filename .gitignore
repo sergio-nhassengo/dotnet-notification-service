@@ -6,7 +6,7 @@
 ._*
 
 # Custom folder icons
-Icon
+Icon
 
 # Volume root files
 .DocumentRevisions-V100
@@ -84,9 +84,13 @@ x86/
 **/[Pp]ackages/*
 !**/[Pp]ackages/build/
 
+# Local NuGet feed for the FeatureCli tool (committed so `dotnet tool restore` works offline)
+!nuget-local-feed/*.nupkg
+
 # .NET build artifacts
 artifacts/
 
 # Publish output
 publish/
 Api/logs
+nuget-local-feed

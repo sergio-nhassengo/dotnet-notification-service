@@ -1,6 +1,0 @@
-@ApiTemplate_HostAddress = http://localhost:5290
-
-GET {{ApiTemplate_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

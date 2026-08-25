@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Ivandro Bangal",
+  "classifications": [ "Web API", "Clean Architecture" ],
+  "identity": "ApiTemplate.CleanArchitecture",
+  "name": "Clean Architecture Web API",
+  "shortName": "cleanapi",
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "sourceName": "MPDCApiTemplate",
+  "preferNameDirectory": true,
+  "guids": [
+    "EFDFCDD2-48A5-462B-ABD5-05831D6140DD",
+    "FDDC19B3-F591-46BF-9CD4-91B041842079",
+    "291AD55B-3CB3-49CF-9234-C9901FBAEE37",
+    "D842252D-3AE8-46C3-95B5-CE64C9FDB51A",
+    "96B25BD7-BC05-4E5E-9DEF-F0F63791441E",
+    "9D6E4635-C714-4415-A620-92F2C241EBE6"
+  ],
+  "symbols": {
+    "DefaultDbInstance": {
+      "type": "parameter",
+      "datatype": "string",
+      "isRequired": true,
+      "replaces": "REPLACE_DEFAULT_DB_INSTANCE",
+      "description": "SQL Server instance/address for the 'Default' connection string (e.g. localhost,1433)."
+    },
+    "LoggingDbInstance": {
+      "type": "parameter",
+      "datatype": "string",
+      "isRequired": true,
+      "replaces": "REPLACE_LOGGING_DB_INSTANCE",
+      "description": "SQL Server instance/address for the 'Logging' connection string (e.g. localhost,1433)."
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            "**/logs/**",
+            "**/.git/**",
+            "**/.idea/**",
+            "**/.vs/**",
+            "**/*.user",
+            "**/.DS_Store",
+            "tools/**",
+            "nuget-local-feed/**"
+          ]
+        }
+      ]
+    }
+  ]
+}

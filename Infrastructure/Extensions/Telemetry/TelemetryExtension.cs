@@ -6,14 +6,18 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace Infra.Extensions.Telemetry;
+namespace Infrastructure.Extensions.Telemetry;
 
 public static class TelemetryExtension
 {
-    public static IServiceCollection AddInfraOpenTelemetry(this IServiceCollection services, IConfiguration configuration)
+    private const string DEFAULT_ENDPOINT = "https://localhost:4317";
+    private const string DEFAULT_APP_NAME = "MPDCApiTemplate";
+
+    public static IServiceCollection AddInfraOpenTelemetry(this IServiceCollection services,
+        IConfiguration configuration)
     {
-        var serviceName = configuration["OpenTelemetry:ServiceName"] ?? "ProjectCore";
-        var otlpEndpoint = configuration["OpenTelemetry:Otlp:Endpoint"]; // e.g. "http://localhost:4317"
+        var serviceName = configuration["OpenTelemetry:ServiceName"] ?? DEFAULT_APP_NAME;
+        var otlpEndpoint = configuration["OpenTelemetry:Otlp:Endpoint"] ?? DEFAULT_ENDPOINT;
 
         services.AddOpenTelemetry()
             .ConfigureResource(rb => rb.AddService(serviceName))
@@ -73,7 +77,7 @@ public static class TelemetryExtension
                         builder.AddConsoleExporter();
                     }
                 }
-                );
+            );
 
         return services;
     }

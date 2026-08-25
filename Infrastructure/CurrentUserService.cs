@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Application.Common.Security;
 using Microsoft.AspNetCore.Http;
 
-namespace Infra;
+namespace Infrastructure;
 
 public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {

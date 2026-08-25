@@ -1,4 +1,4 @@
-namespace Infra.Extensions.Auth;
+namespace Infrastructure.Extensions.Auth;
 
 /// <summary>
 /// Central registry of authorization policy names. Add new policies here alongside their

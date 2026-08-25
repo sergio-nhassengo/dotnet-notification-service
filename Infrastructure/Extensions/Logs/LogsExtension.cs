@@ -7,14 +7,11 @@ using Serilog.Formatting.Json;
 using Serilog.Sinks.Grafana.Loki;
 using Serilog.Sinks.MSSqlServer;
 
-namespace Infra.Extensions.Logs;
+namespace Infrastructure.Extensions.Logs;
 
 public static class LogsExtension
 {
-    /// <summary>
-    /// Configures the Serilog pipeline for the host. Called from <c>builder.Host.UseSerilog(...)</c>
-    /// in Program.cs, since Serilog wraps the whole generic host rather than just <see cref="IServiceCollection"/>.
-    /// </summary>
+    
     public static LoggerConfiguration ConfigureInfraSerilog(this LoggerConfiguration loggerConfiguration, IConfiguration configuration)
     {
         loggerConfiguration
