@@ -1,8 +1,12 @@
+
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Application.Common.Behaviours;
 using Application.Common.Security;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace Application.Common.Behaviours;
 
 public class LoggingBehaviour<TRequest, TResponse>(
     ILogger<LoggingBehaviour<TRequest, TResponse>> logger,

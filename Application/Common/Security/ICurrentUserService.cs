@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Application.Common.Security;
 
 public interface ICurrentUserService

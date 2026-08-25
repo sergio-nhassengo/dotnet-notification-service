@@ -1,8 +1,12 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Application.Common.Exceptions;
 using Domain.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace MPDCApiTemplate.ExceptionHandlers;
 
@@ -28,6 +32,12 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
                 problemDetails.Status = StatusCodes.Status404NotFound;
                 problemDetails.Title = exception.Message;
                 logger.LogError(exception, "Not Found exception. TraceId: {TraceId}", httpContext.TraceIdentifier);
+                break;
+
+            case AuthenticationException:
+                problemDetails.Status = StatusCodes.Status401Unauthorized;
+                problemDetails.Title = exception.Message;
+                logger.LogWarning(exception, "Authentication exception. TraceId: {TraceId}", httpContext.TraceIdentifier);
                 break;
 
             default:

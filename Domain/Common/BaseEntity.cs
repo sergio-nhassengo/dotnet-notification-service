@@ -1,10 +1,11 @@
+using System.Collections.Generic;
 using Domain.Events;
 
 namespace Domain.Common;
 
-public abstract class BaseEntity
+public abstract class BaseEntity<T>
 {
-    public int Id { get; set; }
+    public T Id { get; set; }
 
     private readonly List<DomainEvent> _domainEvents = [];
     public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
