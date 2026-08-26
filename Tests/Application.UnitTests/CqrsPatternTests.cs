@@ -78,8 +78,7 @@ public class CqrsPatternTests
                                    t.Name.EndsWith("Validator") &&
                                    typeof(IValidator).IsAssignableFrom(t));
 
-        // Not every command/query is required to have a validator, but if one exists in the
-        // feature's namespace it must be named after the request and validate that exact type.
+        
         if (validatorType is null)
         {
             return;

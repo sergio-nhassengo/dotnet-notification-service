@@ -23,6 +23,8 @@ public class ApplicationDbContext(
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Role> Roles => Set<Role>();
+    
+    public DbSet<Book> Books => Set<Book>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

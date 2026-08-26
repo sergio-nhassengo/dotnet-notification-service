@@ -25,13 +25,13 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
                 problemDetails.Status = StatusCodes.Status400BadRequest;
                 problemDetails.Title = "Validation error";
                 problemDetails.Extensions["errors"] = validationException.Errors;
-                logger.LogError(exception, "Validation exception. TraceId: {TraceId}, {Errors}", httpContext.TraceIdentifier, validationException.Errors);
+                logger.LogWarning(exception, "Validation exception. TraceId: {TraceId}, {Errors}", httpContext.TraceIdentifier, validationException.Errors);
                 break;
 
             case NotFoundException:
                 problemDetails.Status = StatusCodes.Status404NotFound;
                 problemDetails.Title = exception.Message;
-                logger.LogError(exception, "Not Found exception. TraceId: {TraceId}", httpContext.TraceIdentifier);
+                logger.LogWarning(exception, "Not Found exception. TraceId: {TraceId}", httpContext.TraceIdentifier);
                 break;
 
             case AuthenticationException:

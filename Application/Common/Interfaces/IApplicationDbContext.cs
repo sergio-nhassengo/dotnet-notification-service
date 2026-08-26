@@ -15,5 +15,7 @@ public interface IApplicationDbContext
 
     DbSet<Role> Roles { get; }
 
+    DbSet<Book> Books { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
