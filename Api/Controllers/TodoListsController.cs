@@ -32,7 +32,7 @@ public class TodoListsController : BaseController
     }
 
     [HttpPost]
-    //[Authorize(Policy = AuthPolicies.RequireAdmin)]
+    [Authorize(Policy = AuthPolicies.RequireAdmin)]
     public async Task<ActionResult<int>> CreateTodoList(CreateTodoListCommand command, CancellationToken cancellationToken)
     {
         var id = await this.Mediator.Send(command, cancellationToken);

@@ -51,5 +51,5 @@ app.MapControllers();
 
 app.Run();
 
-// Exposed so Microsoft.AspNetCore.Mvc.Testing's WebApplicationFactory<Program> can bootstrap this host in tests.
+// Exposed so Unit Tests can bootstrap this host during tests.
 public partial class Program;

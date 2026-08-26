@@ -30,7 +30,9 @@ public class BearerSecuritySchemeTransformer : IOpenApiDocumentTransformer
             [new OpenApiSecuritySchemeReference(SchemeId, document)] = []
         };
 
-        foreach (var operation in document.Paths.Values.SelectMany(path => path.Operations.Values))
+        foreach (var operation in document.Paths.Values
+                     .Where(path => path.Operations is not null)
+                     .SelectMany(path => path.Operations!.Values))
         {
             operation.Security ??= new List<OpenApiSecurityRequirement>();
             operation.Security.Add(requirement);
