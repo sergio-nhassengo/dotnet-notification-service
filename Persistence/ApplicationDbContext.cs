@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Application.Common.Security;
 using Domain.Common;
@@ -17,6 +19,12 @@ public class ApplicationDbContext(
     public DbSet<TodoList> TodoLists => Set<TodoList>();
 
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
+
+    public DbSet<User> Users => Set<User>();
+
+    public DbSet<Role> Roles => Set<Role>();
+    
+    public DbSet<Book> Books => Set<Book>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -47,7 +55,7 @@ public class ApplicationDbContext(
         var now = dateTime.Now;
         var userId = currentUserService.UserId ?? "anonymous";
 
-        foreach (var entry in ChangeTracker.Entries<BaseAuditableEntity>())
+        foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
         {
             switch (entry.State)
             {

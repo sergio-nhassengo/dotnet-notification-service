@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -36,16 +37,5 @@ public static class LogsExtension
         }
 
         return loggerConfiguration;
-    }
-
-    public static IServiceCollection AddInfraSerilog(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddSerilog(options =>
-        {
-            options.MinimumLevel.Information()
-                .WriteTo.Console(new JsonFormatter(), LogEventLevel.Debug);
-        });
-        
-        return services;
     }
 }

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MPDCApiTemplate.Controllers;
 
@@ -8,6 +9,5 @@ namespace MPDCApiTemplate.Controllers;
 [ApiController]
 public class BaseController: ControllerBase
 {
-    private IMediator _mediator;
-    protected IMediator Mediator => _mediator ?? HttpContext.RequestServices.GetService<IMediator>();
+    protected IMediator Mediator => HttpContext.RequestServices.GetRequiredService<IMediator>();
 }

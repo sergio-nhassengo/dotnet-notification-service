@@ -1,6 +1,8 @@
+using System;
+
 namespace Domain.Common;
 
-public abstract class BaseAuditableEntity : BaseEntity
+public abstract class BaseAuditableEntity<T> : BaseEntity<T>, IAuditableEntity
 {
     public DateTimeOffset Created { get; set; } = DateTimeOffset.UtcNow;
 

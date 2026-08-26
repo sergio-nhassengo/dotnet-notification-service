@@ -21,7 +21,7 @@
     image: infra
     build:
       context: .
-      dockerfile: Infra/Dockerfile
+      dockerfile: Infrastructure/Dockerfile
 
   persistence:
     image: persistence

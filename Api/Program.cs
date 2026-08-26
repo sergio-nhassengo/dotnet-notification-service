@@ -1,9 +1,12 @@
 using Application;
 using MPDCApiTemplate.ExceptionHandlers;
+using MPDCApiTemplate.OpenApi;
 using Infrastructure;
 using Infrastructure.Extensions.Cors;
 using Infrastructure.Extensions.Logs;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Persistence;
 using Serilog;
 using Serilog.Events;
@@ -16,7 +19,7 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
     writeToProviders: true);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
 builder.Services
     .AddApplication()
@@ -47,3 +50,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Exposed so Unit Tests can bootstrap this host during tests.
+public partial class Program;
