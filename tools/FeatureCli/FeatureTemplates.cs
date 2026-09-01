@@ -12,23 +12,18 @@ internal static class FeatureTemplates
         new (string, string)[]
         {
             ($"{name}Query.cs", $$"""
-            using MediatR;
-
-            namespace {{rootNamespace}}.Features.{{feature}}.Queries.{{name}};
-
-            // TODO: add query parameters, e.g. public record {{name}}Query(int Id) : IRequest<{{name}}Response>;
-            public record {{name}}Query : IRequest<{{name}}Response>;
-
-            """),
-            ($"{name}QueryHandler.cs", $$"""
             using {{dbContextNamespace}};
+            using Domain.Common;
             using MediatR;
 
             namespace {{rootNamespace}}.Features.{{feature}}.Queries.{{name}};
 
-            public class {{name}}QueryHandler({{dbContextType}} context) : IRequestHandler<{{name}}Query, {{name}}Response>
+            // TODO: add query parameters, e.g. public record {{name}}Query(int Id) : IRequest<Result<{{name}}Response>>;
+            public record {{name}}Query : IRequest<Result<{{name}}Response>>;
+
+            public class {{name}}QueryHandler({{dbContextType}} context) : IRequestHandler<{{name}}Query, Result<{{name}}Response>>
             {
-                public Task<{{name}}Response> Handle({{name}}Query request, CancellationToken cancellationToken)
+                public Task<Result<{{name}}Response>> Handle({{name}}Query request, CancellationToken cancellationToken)
                 {
                     // TODO: query context.{{feature}} (Domain.Entities.{{entity}}) and map the result to {{name}}Response
                     throw new NotImplementedException();
@@ -52,23 +47,18 @@ internal static class FeatureTemplates
         new (string, string)[]
         {
             ($"{name}Command.cs", $$"""
-            using MediatR;
-
-            namespace {{rootNamespace}}.Features.{{feature}}.Commands.{{name}};
-
-            // TODO: add command parameters, e.g. public record {{name}}Command(int Id, string Title) : IRequest;
-            public record {{name}}Command : IRequest;
-
-            """),
-            ($"{name}CommandHandler.cs", $$"""
             using {{dbContextNamespace}};
+            using Domain.Common;
             using MediatR;
 
             namespace {{rootNamespace}}.Features.{{feature}}.Commands.{{name}};
 
-            public class {{name}}CommandHandler({{dbContextType}} context) : IRequestHandler<{{name}}Command>
+            // TODO: add command parameters, e.g. public record {{name}}Command(int Id, string Title) : IRequest<Result>;
+            public record {{name}}Command : IRequest<Result>;
+
+            public class {{name}}CommandHandler({{dbContextType}} context) : IRequestHandler<{{name}}Command, Result>
             {
-                public Task Handle({{name}}Command request, CancellationToken cancellationToken)
+                public Task<Result> Handle({{name}}Command request, CancellationToken cancellationToken)
                 {
                     // TODO: implement using context.{{feature}} (Domain.Entities.{{entity}}) and context.SaveChangesAsync(cancellationToken)
                     throw new NotImplementedException();
@@ -94,7 +84,7 @@ internal static class FeatureTemplates
 
     public static (string Category, string Name, (string FileName, string Content)[] Files)[] Crud(
         string entity, string plural, string feature, string rootNamespace, string dbContextNamespace,
-        string dbContextType, string keyType, PropertySpec[] properties)
+        string dbContextType, string keyType, string entityNamespace, PropertySpec[] properties)
     {
         var createName = $"Create{entity}";
         var updateName = $"Update{entity}";
@@ -107,9 +97,12 @@ internal static class FeatureTemplates
             ? $"{keyType} Id"
             : $"{keyType} Id, {string.Join(", ", properties.Select(p => $"{p.Type} {p.Name}"))}";
 
+        // Fully-qualified: if --feature matches --entity (e.g. "Vessel"/"Vessel"), the generated namespace
+        // (Features.Vessel.Commands.CreateVessel) has "Vessel" as a namespace segment, which shadows a bare
+        // "Vessel" type reference - enclosing namespace members always win over `using`-imported types in C#.
         var createObjectInit = properties.Length == 0
-            ? $"new {entity}()"
-            : $"new {entity}\n        {{\n" +
+            ? $"new {entityNamespace}.{entity}()"
+            : $"new {entityNamespace}.{entity}\n        {{\n" +
               string.Join(",\n", properties.Select(p => $"            {p.Name} = request.{p.Name}")) +
               "\n        }";
 
@@ -135,16 +128,17 @@ internal static class FeatureTemplates
             [
                 ($"{createName}Command.cs", $$"""
                 using {{dbContextNamespace}};
-                using Domain.Entities;
+                using {{entityNamespace}};
+                using Domain.Common;
                 using MediatR;
 
                 namespace {{rootNamespace}}.Features.{{feature}}.Commands.{{createName}};
 
-                public record {{createName}}Command({{createParams}}) : IRequest<{{keyType}}>;
+                public record {{createName}}Command({{createParams}}) : IRequest<Result<{{keyType}}>>;
 
-                public class {{createName}}CommandHandler({{dbContextType}} context) : IRequestHandler<{{createName}}Command, {{keyType}}>
+                public class {{createName}}CommandHandler({{dbContextType}} context) : IRequestHandler<{{createName}}Command, Result<{{keyType}}>>
                 {
-                    public async Task<{{keyType}}> Handle({{createName}}Command request, CancellationToken cancellationToken)
+                    public async Task<Result<{{keyType}}>> Handle({{createName}}Command request, CancellationToken cancellationToken)
                     {
                         var entity = {{createObjectInit}};
 
@@ -176,29 +170,31 @@ internal static class FeatureTemplates
             [
                 ($"{updateName}Command.cs", $$"""
                 using {{dbContextNamespace}};
-                using Domain.Exceptions;
+                using Domain.Common;
                 using MediatR;
                 using Microsoft.EntityFrameworkCore;
 
                 namespace {{rootNamespace}}.Features.{{feature}}.Commands.{{updateName}};
 
-                public record {{updateName}}Command({{updateParams}}) : IRequest;
+                public record {{updateName}}Command({{updateParams}}) : IRequest<Result>;
 
-                public class {{updateName}}CommandHandler({{dbContextType}} context) : IRequestHandler<{{updateName}}Command>
+                public class {{updateName}}CommandHandler({{dbContextType}} context) : IRequestHandler<{{updateName}}Command, Result>
                 {
-                    public async Task Handle({{updateName}}Command request, CancellationToken cancellationToken)
+                    public async Task<Result> Handle({{updateName}}Command request, CancellationToken cancellationToken)
                     {
                         var entity = await context.{{plural}}
                             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
                         if (entity is null)
                         {
-                            throw new NotFoundException(nameof(Domain.Entities.{{entity}}), request.Id);
+                            return Result.Failure(Error.EntityNotFound(nameof({{entityNamespace}}.{{entity}}), request.Id));
                         }
 
                         {{updateAssignments}}
 
                         await context.SaveChangesAsync(cancellationToken);
+
+                        return Result.Success();
                     }
                 }
 
@@ -222,29 +218,31 @@ internal static class FeatureTemplates
             [
                 ($"{deleteName}Command.cs", $$"""
                 using {{dbContextNamespace}};
-                using Domain.Exceptions;
+                using Domain.Common;
                 using MediatR;
                 using Microsoft.EntityFrameworkCore;
 
                 namespace {{rootNamespace}}.Features.{{feature}}.Commands.{{deleteName}};
 
-                public record {{deleteName}}Command({{keyType}} Id) : IRequest;
+                public record {{deleteName}}Command({{keyType}} Id) : IRequest<Result>;
 
-                public class {{deleteName}}CommandHandler({{dbContextType}} context) : IRequestHandler<{{deleteName}}Command>
+                public class {{deleteName}}CommandHandler({{dbContextType}} context) : IRequestHandler<{{deleteName}}Command, Result>
                 {
-                    public async Task Handle({{deleteName}}Command request, CancellationToken cancellationToken)
+                    public async Task<Result> Handle({{deleteName}}Command request, CancellationToken cancellationToken)
                     {
                         var entity = await context.{{plural}}
                             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
                         if (entity is null)
                         {
-                            throw new NotFoundException(nameof(Domain.Entities.{{entity}}), request.Id);
+                            return Result.Failure(Error.EntityNotFound(nameof({{entityNamespace}}.{{entity}}), request.Id));
                         }
 
                         context.{{plural}}.Remove(entity);
 
                         await context.SaveChangesAsync(cancellationToken);
+
+                        return Result.Success();
                     }
                 }
 
@@ -257,25 +255,27 @@ internal static class FeatureTemplates
                 using {{dbContextNamespace}};
                 using AutoMapper;
                 using AutoMapper.QueryableExtensions;
-                using Domain.Exceptions;
+                using Domain.Common;
                 using MediatR;
                 using Microsoft.EntityFrameworkCore;
 
                 namespace {{rootNamespace}}.Features.{{feature}}.Queries.{{getByIdName}};
 
-                public record {{getByIdName}}Query({{keyType}} Id) : IRequest<{{entity}}Dto>;
+                public record {{getByIdName}}Query({{keyType}} Id) : IRequest<Result<{{entity}}Dto>>;
 
                 public class {{getByIdName}}QueryHandler({{dbContextType}} context, IConfigurationProvider mapperConfiguration)
-                    : IRequestHandler<{{getByIdName}}Query, {{entity}}Dto>
+                    : IRequestHandler<{{getByIdName}}Query, Result<{{entity}}Dto>>
                 {
-                    public async Task<{{entity}}Dto> Handle({{getByIdName}}Query request, CancellationToken cancellationToken)
+                    public async Task<Result<{{entity}}Dto>> Handle({{getByIdName}}Query request, CancellationToken cancellationToken)
                     {
                         var result = await context.{{plural}}
                             .Where(x => x.Id == request.Id)
                             .ProjectTo<{{entity}}Dto>(mapperConfiguration)
                             .FirstOrDefaultAsync(cancellationToken);
 
-                        return result ?? throw new NotFoundException(nameof(Domain.Entities.{{entity}}), request.Id);
+                        return result is null
+                            ? Result.Failure<{{entity}}Dto>(Error.EntityNotFound(nameof({{entityNamespace}}.{{entity}}), request.Id))
+                            : result;
                     }
                 }
 
@@ -284,30 +284,27 @@ internal static class FeatureTemplates
             ("Queries", getAllName,
             [
                 ($"{getAllName}Query.cs", $$"""
-                using MediatR;
-
-                namespace {{rootNamespace}}.Features.{{feature}}.Queries.{{getAllName}};
-
-                public record {{getAllName}}Query : IRequest<List<{{entity}}Dto>>;
-
-                """),
-                ($"{getAllName}QueryHandler.cs", $$"""
                 using {{dbContextNamespace}};
                 using AutoMapper;
                 using AutoMapper.QueryableExtensions;
+                using Domain.Common;
                 using MediatR;
                 using Microsoft.EntityFrameworkCore;
 
                 namespace {{rootNamespace}}.Features.{{feature}}.Queries.{{getAllName}};
 
+                public record {{getAllName}}Query : IRequest<Result<List<{{entity}}Dto>>>;
+
                 public class {{getAllName}}QueryHandler({{dbContextType}} context, IConfigurationProvider mapperConfiguration)
-                    : IRequestHandler<{{getAllName}}Query, List<{{entity}}Dto>>
+                    : IRequestHandler<{{getAllName}}Query, Result<List<{{entity}}Dto>>>
                 {
-                    public Task<List<{{entity}}Dto>> Handle({{getAllName}}Query request, CancellationToken cancellationToken)
+                    public async Task<Result<List<{{entity}}Dto>>> Handle({{getAllName}}Query request, CancellationToken cancellationToken)
                     {
-                        return context.{{plural}}{{orderBy}}
+                        var result = await context.{{plural}}{{orderBy}}
                             .ProjectTo<{{entity}}Dto>(mapperConfiguration)
                             .ToListAsync(cancellationToken);
+
+                        return result;
                     }
                 }
 
@@ -326,7 +323,7 @@ internal static class FeatureTemplates
                     {
                         public Mapping()
                         {
-                            CreateMap<Domain.Entities.{{entity}}, {{entity}}Dto>();
+                            CreateMap<{{entityNamespace}}.{{entity}}, {{entity}}Dto>();
                         }
                     }
                 }
@@ -334,6 +331,83 @@ internal static class FeatureTemplates
                 """)
             ])
         ];
+    }
+
+    public static (string FileName, string Content) Controller(
+        string entity, string plural, string feature, string apiRootNamespace, string applicationRootNamespace, string keyType)
+    {
+        var createName = $"Create{entity}";
+        var updateName = $"Update{entity}";
+        var deleteName = $"Delete{entity}";
+        var getByIdName = $"Get{entity}ById";
+        var getAllName = $"Get{plural}";
+        var getOneName = $"Get{entity}";
+
+        var idRoute = keyType switch
+        {
+            "int" => "{id:int}",
+            "long" => "{id:long}",
+            "Guid" => "{id:guid}",
+            _ => "{id}"
+        };
+
+        var fileName = $"{plural}Controller.cs";
+        var content = $$"""
+        using {{applicationRootNamespace}}.Features.{{feature}}.Commands.{{createName}};
+        using {{applicationRootNamespace}}.Features.{{feature}}.Commands.{{deleteName}};
+        using {{applicationRootNamespace}}.Features.{{feature}}.Commands.{{updateName}};
+        using {{applicationRootNamespace}}.Features.{{feature}}.Queries.{{getAllName}};
+        using {{applicationRootNamespace}}.Features.{{feature}}.Queries.{{getByIdName}};
+        using Microsoft.AspNetCore.Mvc;
+
+        namespace {{apiRootNamespace}}.Controllers;
+
+        public class {{plural}}Controller : BaseController
+        {
+            [HttpGet]
+            public async Task<ActionResult<List<{{entity}}Dto>>> {{getAllName}}(CancellationToken cancellationToken)
+            {
+                var result = await this.Mediator.Send(new {{getAllName}}Query(), cancellationToken);
+                return HandleResult(result);
+            }
+
+            [HttpGet("{{idRoute}}")]
+            public async Task<ActionResult<{{entity}}Dto>> {{getOneName}}({{keyType}} id, CancellationToken cancellationToken)
+            {
+                var result = await this.Mediator.Send(new {{getByIdName}}Query(id), cancellationToken);
+                return HandleResult(result);
+            }
+
+            [HttpPost]
+            public async Task<ActionResult<{{keyType}}>> {{createName}}({{createName}}Command command, CancellationToken cancellationToken)
+            {
+                var result = await this.Mediator.Send(command, cancellationToken);
+                return HandleCreatedResult(result, nameof({{getOneName}}), id => new { id });
+            }
+
+            [HttpPut("{{idRoute}}")]
+            public async Task<IActionResult> {{updateName}}({{keyType}} id, {{updateName}}Command command, CancellationToken cancellationToken)
+            {
+                if (id != command.Id)
+                {
+                    return BadRequest();
+                }
+
+                var result = await this.Mediator.Send(command, cancellationToken);
+                return HandleResult(result);
+            }
+
+            [HttpDelete("{{idRoute}}")]
+            public async Task<IActionResult> {{deleteName}}({{keyType}} id, CancellationToken cancellationToken)
+            {
+                var result = await this.Mediator.Send(new {{deleteName}}Command(id), cancellationToken);
+                return HandleResult(result);
+            }
+        }
+
+        """;
+
+        return (fileName, content);
     }
 
     private static string BuildCreateRules(PropertySpec[] properties)

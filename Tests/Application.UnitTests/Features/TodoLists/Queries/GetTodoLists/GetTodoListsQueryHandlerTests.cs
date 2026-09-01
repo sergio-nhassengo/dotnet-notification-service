@@ -25,8 +25,9 @@ public class GetTodoListsQueryHandlerTests
 
         var result = await handler.Handle(new GetTodoListsQuery(), CancellationToken.None);
 
-        Assert.Equal(["Apple", "Zebra"], result.Select(r => r.Title));
-        Assert.Equal(1, result.Single(r => r.Title == "Apple").ItemCount);
-        Assert.Equal(0, result.Single(r => r.Title == "Zebra").ItemCount);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["Apple", "Zebra"], result.Value.Select(r => r.Title));
+        Assert.Equal(1, result.Value.Single(r => r.Title == "Apple").ItemCount);
+        Assert.Equal(0, result.Value.Single(r => r.Title == "Zebra").ItemCount);
     }
 }

@@ -32,6 +32,9 @@ var keyType = "int";
 string? propertiesSpec = null;
 var entityProjectName = "Domain";
 string? entityPath = null;
+var apiProjectName = "Api";
+string? apiProjectPath = null;
+var generateController = true;
 
 for (var i = 1; i < args.Length; i++)
 {
@@ -73,6 +76,15 @@ for (var i = 1; i < args.Length; i++)
         case "--entity-path":
             entityPath = RequireValue(args, ref i, "--entity-path");
             break;
+        case "--api-project":
+            apiProjectName = RequireValue(args, ref i, "--api-project");
+            break;
+        case "--api-project-path":
+            apiProjectPath = RequireValue(args, ref i, "--api-project-path");
+            break;
+        case "--no-controller":
+            generateController = false;
+            break;
         case "--force":
             force = true;
             break;
@@ -94,48 +106,13 @@ if (string.IsNullOrWhiteSpace(feature) || string.IsNullOrWhiteSpace(entity) || (
 
 var repoRoot = FindRepoRoot(Directory.GetCurrentDirectory());
 
-string csprojPath;
-
-if (projectPath is not null)
+var resolvedCsprojPath = ResolveCsprojPath(projectName, projectPath, repoRoot, "--project", "--project-path");
+if (resolvedCsprojPath is null)
 {
-    csprojPath = Path.GetFullPath(projectPath);
-    if (!File.Exists(csprojPath))
-    {
-        Console.Error.WriteLine($"--project-path '{projectPath}' does not exist.");
-        return 1;
-    }
+    return 1;
 }
-else
-{
-    if (repoRoot is null)
-    {
-        Console.Error.WriteLine("Could not locate the repository root (no *.sln file found in any parent directory). Pass --project-path to point at the target .csproj directly.");
-        return 1;
-    }
 
-    var matches = Directory.EnumerateFiles(repoRoot, $"{projectName}.csproj", SearchOption.AllDirectories)
-        .Where(p => !IsUnderBuildOutput(p))
-        .ToList();
-
-    if (matches.Count == 0)
-    {
-        Console.Error.WriteLine($"Could not find '{projectName}.csproj' under '{repoRoot}'. Use --project to name a different project, or --project-path to point at it directly.");
-        return 1;
-    }
-
-    if (matches.Count > 1)
-    {
-        Console.Error.WriteLine($"Found multiple '{projectName}.csproj' files under '{repoRoot}':");
-        foreach (var match in matches)
-        {
-            Console.Error.WriteLine($"  {Path.GetRelativePath(repoRoot, match)}");
-        }
-        Console.Error.WriteLine("Use --project-path to pick one.");
-        return 1;
-    }
-
-    csprojPath = matches[0];
-}
+var csprojPath = resolvedCsprojPath;
 
 var projectDir = Path.GetDirectoryName(csprojPath)!;
 var rootNamespace = ReadRootNamespace(csprojPath);
@@ -145,6 +122,8 @@ if (type == "crud")
 {
     plural ??= $"{entity}s";
 
+    var entityFile = FindEntityFile(entityPath, repoRoot, entityProjectName, entity);
+
     PropertySpec[] properties;
     if (propertiesSpec is not null)
     {
@@ -152,7 +131,6 @@ if (type == "crud")
     }
     else
     {
-        var entityFile = FindEntityFile(entityPath, repoRoot, entityProjectName, entity);
         var detected = entityFile is not null ? ExtractProperties(entityFile) : [];
 
         if (detected.Length > 0)
@@ -170,7 +148,16 @@ if (type == "crud")
         }
     }
 
-    var fileSets = FeatureTemplates.Crud(entity, plural, feature, rootNamespace, dbContextNamespace, dbContextType, keyType, properties);
+    var entityNamespace = entityFile is not null ? ExtractNamespace(entityFile) : null;
+    if (entityNamespace is null)
+    {
+        entityNamespace = $"{entityProjectName}.Entities";
+        Console.WriteLine(entityFile is not null
+            ? $"Could not determine the namespace declared in '{Path.GetRelativePath(Directory.GetCurrentDirectory(), entityFile)}' - defaulting to '{entityNamespace}'."
+            : $"Could not find '{entity}.cs' to detect its namespace - defaulting to '{entityNamespace}'. Pass --entity-path to point at the file, or --entity-project if the entity project isn't called 'Domain'.");
+    }
+
+    var fileSets = FeatureTemplates.Crud(entity, plural, feature, rootNamespace, dbContextNamespace, dbContextType, keyType, entityNamespace, properties);
 
     var outputDirs = fileSets
         .Select(set => Path.Combine(projectDir, "Features", feature, set.Category, set.Name))
@@ -181,6 +168,28 @@ if (type == "crud")
     {
         Console.Error.WriteLine($"'{Path.GetRelativePath(Directory.GetCurrentDirectory(), conflicting)}' already exists and is not empty. Use --force to overwrite.");
         return 1;
+    }
+
+    string? apiControllerPath = null;
+    string? apiRootNamespace = null;
+
+    if (generateController)
+    {
+        var resolvedApiCsprojPath = ResolveCsprojPath(apiProjectName, apiProjectPath, repoRoot, "--api-project", "--api-project-path");
+        if (resolvedApiCsprojPath is null)
+        {
+            return 1;
+        }
+
+        var apiProjectDir = Path.GetDirectoryName(resolvedApiCsprojPath)!;
+        apiRootNamespace = ReadRootNamespace(resolvedApiCsprojPath);
+        apiControllerPath = Path.Combine(apiProjectDir, "Controllers", $"{plural}Controller.cs");
+
+        if (File.Exists(apiControllerPath) && !force)
+        {
+            Console.Error.WriteLine($"'{Path.GetRelativePath(Directory.GetCurrentDirectory(), apiControllerPath)}' already exists. Use --force to overwrite, or --no-controller to skip controller generation.");
+            return 1;
+        }
     }
 
     foreach (var set in fileSets)
@@ -194,6 +203,14 @@ if (type == "crud")
             File.WriteAllText(path, content);
             Console.WriteLine($"Created {Path.GetRelativePath(Directory.GetCurrentDirectory(), path)}");
         }
+    }
+
+    if (apiControllerPath is not null)
+    {
+        var (_, controllerContent) = FeatureTemplates.Controller(entity, plural, feature, apiRootNamespace!, rootNamespace, keyType);
+        Directory.CreateDirectory(Path.GetDirectoryName(apiControllerPath)!);
+        File.WriteAllText(apiControllerPath, controllerContent);
+        Console.WriteLine($"Created {Path.GetRelativePath(Directory.GetCurrentDirectory(), apiControllerPath)}");
     }
 
     return 0;
@@ -255,6 +272,50 @@ static string? FindRepoRoot(string startDirectory)
     return null;
 }
 
+static string? ResolveCsprojPath(string projectName, string? explicitPath, string? repoRoot, string nameOption, string pathOption)
+{
+    if (explicitPath is not null)
+    {
+        var full = Path.GetFullPath(explicitPath);
+        if (!File.Exists(full))
+        {
+            Console.Error.WriteLine($"{pathOption} '{explicitPath}' does not exist.");
+            return null;
+        }
+
+        return full;
+    }
+
+    if (repoRoot is null)
+    {
+        Console.Error.WriteLine($"Could not locate the repository root (no *.sln file found in any parent directory). Pass {pathOption} to point at the target .csproj directly.");
+        return null;
+    }
+
+    var matches = Directory.EnumerateFiles(repoRoot, $"{projectName}.csproj", SearchOption.AllDirectories)
+        .Where(p => !IsUnderBuildOutput(p))
+        .ToList();
+
+    if (matches.Count == 0)
+    {
+        Console.Error.WriteLine($"Could not find '{projectName}.csproj' under '{repoRoot}'. Use {nameOption} to name a different project, or {pathOption} to point at it directly.");
+        return null;
+    }
+
+    if (matches.Count > 1)
+    {
+        Console.Error.WriteLine($"Found multiple '{projectName}.csproj' files under '{repoRoot}':");
+        foreach (var match in matches)
+        {
+            Console.Error.WriteLine($"  {Path.GetRelativePath(repoRoot, match)}");
+        }
+        Console.Error.WriteLine($"Use {pathOption} to pick one.");
+        return null;
+    }
+
+    return matches[0];
+}
+
 static string ReadRootNamespace(string csprojPath)
 {
     var document = XDocument.Load(csprojPath);
@@ -292,6 +353,15 @@ static string? FindEntityFile(string? explicitPath, string? repoRoot, string ent
     // Prefer a match that sits under a directory named after the entity project (e.g. ".../Domain/Entities/Foo.cs").
     return matches.FirstOrDefault(p => p.Split(Path.DirectorySeparatorChar)
         .Any(segment => segment.Equals(entityProjectName, StringComparison.OrdinalIgnoreCase))) ?? matches[0];
+}
+
+static string? ExtractNamespace(string filePath)
+{
+    var text = File.ReadAllText(filePath);
+
+    // File-scoped (namespace Foo.Bar;) or block-scoped (namespace Foo.Bar { ... }) - either form is valid C#.
+    var match = Regex.Match(text, @"namespace\s+([A-Za-z_][\w.]*)\s*[;{]", RegexOptions.Multiline);
+    return match.Success ? match.Groups[1].Value : null;
 }
 
 static PropertySpec[] ExtractProperties(string filePath)
@@ -374,6 +444,9 @@ static void PrintUsage()
                                        (found by searching for <EntityName>.cs) - only pass this to override.
       --entity-project <Name>         Project to search for <EntityName>.cs when auto-detecting (default: Domain)
       --entity-path <path>            Explicit path to the entity's .cs file, skips entity-file discovery
+      --api-project <Name>            .csproj to generate the controller into, matched by file name (default: Api)
+      --api-project-path <path>       Explicit path to the target API .csproj, skips project discovery
+      --no-controller                 Skip generating the ASP.NET controller
 
     Examples:
       feature query   --feature TodoLists --entity TodoList --name GetTodoListById
@@ -383,8 +456,10 @@ static void PrintUsage()
 
     'query'/'command' generate separated files under <ProjectDir>/Features/<FeatureFolder>/<Queries|Commands>/<Name>/.
     'crud' generates a full working set for one entity - Create/Update/Delete commands and GetById/GetAll
-    queries (with handlers, validators, and a shared Dto), each under its own <Name>/ folder, following the
-    exact same pattern as the TodoLists feature already in this template. Create the entity class first
+    queries (with handlers, validators, and a shared Dto), each under its own <Name>/ folder, plus a
+    {Plural}Controller.cs wired up to those commands/queries (found by searching for '<ApiProject>.csproj',
+    default 'Api'), following the exact same pattern as the TodoLists feature already in this template.
+    Pass --no-controller to skip the controller. Create the entity class first
     (e.g. Domain/Entities/Category.cs) and 'crud' will read its properties automatically - no --properties
     needed unless the entity doesn't exist yet or you want a different property set than the entity has.
     The target project is found by searching for '<Name>.csproj' from the nearest *.sln upward.

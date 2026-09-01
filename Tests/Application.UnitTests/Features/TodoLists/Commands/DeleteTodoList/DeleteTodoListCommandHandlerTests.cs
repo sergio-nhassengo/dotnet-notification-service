@@ -1,7 +1,7 @@
 using Application.Features.TodoLists.Commands.DeleteTodoList;
 using Application.UnitTests.Common;
+using Domain.Common;
 using Domain.Entities;
-using Domain.Exceptions;
 
 namespace Application.UnitTests.Features.TodoLists.Commands.DeleteTodoList;
 
@@ -16,18 +16,21 @@ public class DeleteTodoListCommandHandlerTests
         await context.SaveChangesAsync(CancellationToken.None);
 
         var handler = new DeleteTodoListCommandHandler(context);
-        await handler.Handle(new DeleteTodoListCommand(entity.Id), CancellationToken.None);
+        var result = await handler.Handle(new DeleteTodoListCommand(entity.Id), CancellationToken.None);
 
+        Assert.True(result.IsSuccess);
         Assert.Null(await context.TodoLists.FindAsync(entity.Id));
     }
 
     [Fact]
-    public async Task Handle_throws_NotFoundException_when_the_list_does_not_exist()
+    public async Task Handle_returns_a_NotFound_failure_when_the_list_does_not_exist()
     {
         await using var context = TestApplicationDbContextFactory.Create();
         var handler = new DeleteTodoListCommandHandler(context);
 
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            handler.Handle(new DeleteTodoListCommand(999), CancellationToken.None));
+        var result = await handler.Handle(new DeleteTodoListCommand(999), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.NotFound, result.Error.Type);
     }
 }

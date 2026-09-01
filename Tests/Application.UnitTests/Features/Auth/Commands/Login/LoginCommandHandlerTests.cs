@@ -1,7 +1,7 @@
 using Application.Features.Auth.Commands.Login;
 using Application.UnitTests.Common;
+using Domain.Common;
 using Domain.Entities;
-using Domain.Exceptions;
 
 namespace Application.UnitTests.Features.Auth.Commands.Login;
 
@@ -39,12 +39,13 @@ public class LoginCommandHandlerTests
         var jwtGenerator = new FakeJwtTokenGenerator { TokenToReturn = "the-token" };
         var handler = new LoginCommandHandler(context, hasher, jwtGenerator, clock);
 
-        var response = await handler.Handle(new LoginCommand("jane", "correct horse"), CancellationToken.None);
+        var result = await handler.Handle(new LoginCommand("jane", "correct horse"), CancellationToken.None);
 
-        Assert.Equal("the-token", response.AccessToken);
-        Assert.Equal("jane", response.UserName);
-        Assert.Equal("jane@example.com", response.Email);
-        Assert.Equal("Admin", response.Role);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("the-token", result.Value.AccessToken);
+        Assert.Equal("jane", result.Value.UserName);
+        Assert.Equal("jane@example.com", result.Value.Email);
+        Assert.Equal("Admin", result.Value.Role);
         Assert.Same(user, jwtGenerator.LastUser);
 
         var persisted = await context.Users.FindAsync(user.Id);
@@ -52,7 +53,7 @@ public class LoginCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_throws_AuthenticationException_for_an_unknown_username()
+    public async Task Handle_returns_an_Unauthorized_failure_for_an_unknown_username()
     {
         await using var context = TestApplicationDbContextFactory.Create();
         var hasher = new FakePasswordHasher();
@@ -60,12 +61,14 @@ public class LoginCommandHandlerTests
 
         var handler = new LoginCommandHandler(context, hasher, new FakeJwtTokenGenerator(), new FakeDateTime(DateTimeOffset.UtcNow));
 
-        await Assert.ThrowsAsync<AuthenticationException>(() =>
-            handler.Handle(new LoginCommand("unknown", "correct horse"), CancellationToken.None));
+        var result = await handler.Handle(new LoginCommand("unknown", "correct horse"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Unauthorized, result.Error.Type);
     }
 
     [Fact]
-    public async Task Handle_throws_AuthenticationException_for_a_wrong_password()
+    public async Task Handle_returns_an_Unauthorized_failure_for_a_wrong_password()
     {
         await using var context = TestApplicationDbContextFactory.Create();
         var hasher = new FakePasswordHasher();
@@ -73,7 +76,9 @@ public class LoginCommandHandlerTests
 
         var handler = new LoginCommandHandler(context, hasher, new FakeJwtTokenGenerator(), new FakeDateTime(DateTimeOffset.UtcNow));
 
-        await Assert.ThrowsAsync<AuthenticationException>(() =>
-            handler.Handle(new LoginCommand("jane", "wrong password"), CancellationToken.None));
+        var result = await handler.Handle(new LoginCommand("jane", "wrong password"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Unauthorized, result.Error.Type);
     }
 }

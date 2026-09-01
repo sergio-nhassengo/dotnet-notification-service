@@ -5,24 +5,26 @@ using Application.Common.Interfaces;
 using Application.Features.TodoLists.Queries.GetTodoLists;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Domain.Exceptions;
+using Domain.Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.TodoLists.Queries.GetTodoListById;
 
-public record GetTodoListByIdQuery(int Id) : IRequest<TodoListDto>;
+public record GetTodoListByIdQuery(int Id) : IRequest<Result<TodoListDto>>;
 
 public class GetTodoListByIdQueryHandler(IApplicationDbContext context, IConfigurationProvider mapperConfiguration)
-    : IRequestHandler<GetTodoListByIdQuery, TodoListDto>
+    : IRequestHandler<GetTodoListByIdQuery, Result<TodoListDto>>
 {
-    public async Task<TodoListDto> Handle(GetTodoListByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<TodoListDto>> Handle(GetTodoListByIdQuery request, CancellationToken cancellationToken)
     {
         var result = await context.TodoLists
             .Where(l => l.Id == request.Id)
             .ProjectTo<TodoListDto>(mapperConfiguration)
             .FirstOrDefaultAsync(cancellationToken);
 
-        return result ?? throw new NotFoundException(nameof(Domain.Entities.TodoList), request.Id);
+        return result is null
+            ? Result.Failure<TodoListDto>(Error.EntityNotFound(nameof(Domain.Entities.TodoList), request.Id))
+            : result;
     }
 }

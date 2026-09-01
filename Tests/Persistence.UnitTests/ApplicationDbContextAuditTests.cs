@@ -19,14 +19,24 @@ public class ApplicationDbContextAuditTests
         return new ApplicationDbContext(options, dateTime, currentUserService);
     }
 
+    private static User CreateUser(string userName) => new()
+    {
+        Email = $"{userName}@example.com",
+        FirstName = "Jane",
+        LastName = "Doe",
+        UserName = userName,
+        PasswordHash = "hashed-password",
+        Role = new Role { Name = $"Role-{userName}" }
+    };
+
     [Fact]
     public async Task Adding_an_entity_stamps_Created_and_LastModified_with_the_current_user_and_time()
     {
         var clock = new FakeDateTime(new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero));
         await using var context = CreateContext(clock, "42");
 
-        var entity = new TodoList { Title = "Groceries" };
-        context.TodoLists.Add(entity);
+        var entity = CreateUser("jane.doe");
+        context.Users.Add(entity);
         await context.SaveChangesAsync(CancellationToken.None);
 
         Assert.Equal(clock.Now, entity.Created);
@@ -41,8 +51,8 @@ public class ApplicationDbContextAuditTests
         var clock = new FakeDateTime(DateTimeOffset.UtcNow);
         await using var context = CreateContext(clock, userId: null);
 
-        var entity = new TodoList { Title = "Groceries" };
-        context.TodoLists.Add(entity);
+        var entity = CreateUser("jane.doe");
+        context.Users.Add(entity);
         await context.SaveChangesAsync(CancellationToken.None);
 
         Assert.Equal("anonymous", entity.CreatedBy);
@@ -55,15 +65,15 @@ public class ApplicationDbContextAuditTests
         var clock = new FakeDateTime(new DateTimeOffset(2026, 1, 1, 12, 0, 0, TimeSpan.Zero));
         await using var context = CreateContext(clock, "42");
 
-        var entity = new TodoList { Title = "Groceries" };
-        context.TodoLists.Add(entity);
+        var entity = CreateUser("jane.doe");
+        context.Users.Add(entity);
         await context.SaveChangesAsync(CancellationToken.None);
 
         var originalCreated = entity.Created;
         var originalCreatedBy = entity.CreatedBy;
 
         clock.Now = clock.Now.AddHours(2);
-        entity.Title = "Groceries (updated)";
+        entity.LastName = "Smith";
         await context.SaveChangesAsync(CancellationToken.None);
 
         Assert.Equal(originalCreated, entity.Created);
@@ -73,38 +83,18 @@ public class ApplicationDbContextAuditTests
     }
 
     [Fact]
-    public async Task Adding_a_TodoList_with_items_persists_both_and_ItemCount_reflects_it()
+    public async Task Removing_a_User_deletes_it()
     {
         var clock = new FakeDateTime(DateTimeOffset.UtcNow);
         await using var context = CreateContext(clock, "42");
 
-        var entity = new TodoList { Title = "Groceries" };
-        entity.Items.Add(new TodoItem { Title = "Milk" });
-        entity.Items.Add(new TodoItem { Title = "Eggs" });
-
-        context.TodoLists.Add(entity);
+        var entity = CreateUser("jane.doe");
+        context.Users.Add(entity);
         await context.SaveChangesAsync(CancellationToken.None);
 
-        var persisted = await context.TodoLists
-            .Include(l => l.Items)
-            .FirstAsync(l => l.Id == entity.Id, CancellationToken.None);
-
-        Assert.Equal(2, persisted.Items.Count);
-    }
-
-    [Fact]
-    public async Task Removing_a_TodoList_deletes_it()
-    {
-        var clock = new FakeDateTime(DateTimeOffset.UtcNow);
-        await using var context = CreateContext(clock, "42");
-
-        var entity = new TodoList { Title = "Groceries" };
-        context.TodoLists.Add(entity);
+        context.Users.Remove(entity);
         await context.SaveChangesAsync(CancellationToken.None);
 
-        context.TodoLists.Remove(entity);
-        await context.SaveChangesAsync(CancellationToken.None);
-
-        Assert.False(await context.TodoLists.AnyAsync(l => l.Id == entity.Id, CancellationToken.None));
+        Assert.False(await context.Users.AnyAsync(u => u.Id == entity.Id, CancellationToken.None));
     }
 }

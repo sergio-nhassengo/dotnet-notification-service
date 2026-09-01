@@ -94,3 +94,6 @@ artifacts/
 publish/
 Api/logs
 nuget-local-feed
+
+# Local environment overrides for docker compose (copy from .env.example)
+.env

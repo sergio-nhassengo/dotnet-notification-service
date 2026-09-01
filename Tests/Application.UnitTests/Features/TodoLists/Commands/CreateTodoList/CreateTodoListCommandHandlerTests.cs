@@ -11,10 +11,11 @@ public class CreateTodoListCommandHandlerTests
         await using var context = TestApplicationDbContextFactory.Create();
         var handler = new CreateTodoListCommandHandler(context);
 
-        var id = await handler.Handle(new CreateTodoListCommand("Groceries"), CancellationToken.None);
+        var result = await handler.Handle(new CreateTodoListCommand("Groceries"), CancellationToken.None);
 
-        Assert.True(id > 0);
-        var persisted = await context.TodoLists.FindAsync(id);
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value > 0);
+        var persisted = await context.TodoLists.FindAsync(result.Value);
         Assert.NotNull(persisted);
         Assert.Equal("Groceries", persisted!.Title);
     }

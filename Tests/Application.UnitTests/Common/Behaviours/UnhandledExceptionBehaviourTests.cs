@@ -24,16 +24,16 @@ public class UnhandledExceptionBehaviourTests
     }
 
     [Fact]
-    public async Task A_ValidationException_is_not_logged_and_still_propagates()
+    public async Task No_exception_type_is_exempt_from_logging()
     {
         var logger = new FakeLogger<UnhandledExceptionBehaviour<SampleRequest, string>>();
         var behaviour = new UnhandledExceptionBehaviour<SampleRequest, string>(logger);
-        var thrown = new Application.Common.Exceptions.ValidationException();
+        var thrown = new ApplicationException("boom");
 
-        var exception = await Assert.ThrowsAsync<Application.Common.Exceptions.ValidationException>(() =>
+        var exception = await Assert.ThrowsAsync<ApplicationException>(() =>
             behaviour.Handle(new SampleRequest(), _ => throw thrown, CancellationToken.None));
 
         Assert.Same(thrown, exception);
-        Assert.Empty(logger.Entries);
+        Assert.Contains(logger.Entries, e => e.Level == LogLevel.Error && e.Exception == thrown);
     }
 }

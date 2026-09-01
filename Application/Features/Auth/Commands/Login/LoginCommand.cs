@@ -2,21 +2,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using Application.Common.Interfaces;
 using Application.Common.Security;
-using Domain.Exceptions;
+using Domain.Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Auth.Commands.Login;
 
-public record LoginCommand(string UserName, string Password) : IRequest<LoginResponse>;
+public record LoginCommand(string UserName, string Password) : IRequest<Result<LoginResponse>>;
 
 public class LoginCommandHandler(
     IApplicationDbContext context,
     IPasswordHasher passwordHasher,
     IJwtTokenGenerator jwtTokenGenerator,
-    IDateTime dateTime) : IRequestHandler<LoginCommand, LoginResponse>
+    IDateTime dateTime) : IRequestHandler<LoginCommand, Result<LoginResponse>>
 {
-    public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var user = await context.Users
             .Include(u => u.Role)
@@ -24,7 +24,7 @@ public class LoginCommandHandler(
 
         if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
         {
-            throw new AuthenticationException("Invalid username or password.");
+            return Result.Failure<LoginResponse>(Error.Unauthorized("Auth.InvalidCredentials", "Invalid username or password."));
         }
 
         user.LastLogin = dateTime.Now;

@@ -1,7 +1,7 @@
 using Application.Features.TodoLists.Queries.GetTodoListById;
 using Application.UnitTests.Common;
+using Domain.Common;
 using Domain.Entities;
-using Domain.Exceptions;
 
 namespace Application.UnitTests.Features.TodoLists.Queries.GetTodoListById;
 
@@ -18,20 +18,23 @@ public class GetTodoListByIdQueryHandlerTests
         await context.SaveChangesAsync(CancellationToken.None);
 
         var handler = new GetTodoListByIdQueryHandler(context, TestApplicationDbContextFactory.CreateMapperConfiguration());
-        var dto = await handler.Handle(new GetTodoListByIdQuery(entity.Id), CancellationToken.None);
+        var result = await handler.Handle(new GetTodoListByIdQuery(entity.Id), CancellationToken.None);
 
-        Assert.Equal(entity.Id, dto.Id);
-        Assert.Equal("Groceries", dto.Title);
-        Assert.Equal(2, dto.ItemCount);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(entity.Id, result.Value.Id);
+        Assert.Equal("Groceries", result.Value.Title);
+        Assert.Equal(2, result.Value.ItemCount);
     }
 
     [Fact]
-    public async Task Handle_throws_NotFoundException_when_the_list_does_not_exist()
+    public async Task Handle_returns_a_NotFound_failure_when_the_list_does_not_exist()
     {
         await using var context = TestApplicationDbContextFactory.Create();
         var handler = new GetTodoListByIdQueryHandler(context, TestApplicationDbContextFactory.CreateMapperConfiguration());
 
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            handler.Handle(new GetTodoListByIdQuery(999), CancellationToken.None));
+        var result = await handler.Handle(new GetTodoListByIdQuery(999), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.NotFound, result.Error.Type);
     }
 }

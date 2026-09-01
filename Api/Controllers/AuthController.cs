@@ -13,8 +13,8 @@ public class AuthController : BaseController
     [HttpPost("register")]
     public async Task<ActionResult<int>> Register(RegisterCommand command, CancellationToken cancellationToken)
     {
-        var id = await Mediator.Send(command, cancellationToken);
-        return Ok(id);
+        var result = await Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
     }
 
     [AllowAnonymous]
@@ -22,6 +22,6 @@ public class AuthController : BaseController
     public async Task<ActionResult<LoginResponse>> Login(LoginCommand command, CancellationToken cancellationToken)
     {
         var result = await Mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return HandleResult(result);
     }
 }

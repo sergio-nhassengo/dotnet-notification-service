@@ -19,24 +19,23 @@ public class TodoListsController : BaseController
     [HttpGet]
     public async Task<ActionResult<List<TodoListDto>>> GetTodoLists(CancellationToken cancellationToken)
     {
-        
         var result = await this.Mediator.Send(new GetTodoListsQuery(), cancellationToken);
-        return Ok(result);
+        return HandleResult(result);
     }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TodoListDto>> GetTodoList(int id, CancellationToken cancellationToken)
     {
         var result = await this.Mediator.Send(new GetTodoListByIdQuery(id), cancellationToken);
-        return Ok(result);
+        return HandleResult(result);
     }
 
     [HttpPost]
     [Authorize(Policy = AuthPolicies.RequireAdmin)]
     public async Task<ActionResult<int>> CreateTodoList(CreateTodoListCommand command, CancellationToken cancellationToken)
     {
-        var id = await this.Mediator.Send(command, cancellationToken);
-        return CreatedAtAction(nameof(GetTodoList), new { id }, id);
+        var result = await this.Mediator.Send(command, cancellationToken);
+        return HandleCreatedResult(result, nameof(GetTodoList), id => new { id });
     }
 
     [HttpPut("{id:int}")]
@@ -47,14 +46,14 @@ public class TodoListsController : BaseController
             return BadRequest();
         }
 
-        await this.Mediator.Send(command, cancellationToken);
-        return NoContent();
+        var result = await this.Mediator.Send(command, cancellationToken);
+        return HandleResult(result);
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteTodoList(int id, CancellationToken cancellationToken)
     {
-        await this.Mediator.Send(new DeleteTodoListCommand(id), cancellationToken);
-        return NoContent();
+        var result = await this.Mediator.Send(new DeleteTodoListCommand(id), cancellationToken);
+        return HandleResult(result);
     }
 }

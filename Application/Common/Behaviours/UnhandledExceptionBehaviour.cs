@@ -16,7 +16,7 @@ public class UnhandledExceptionBehaviour<TRequest, TResponse>(ILogger<UnhandledE
         {
             return await next();
         }
-        catch (Exception ex) when (ex is not Exceptions.ValidationException)
+        catch (Exception ex)
         {
             logger.LogError(ex, "Unhandled exception for request {RequestName} {@Request}", typeof(TRequest).Name, request);
             throw;

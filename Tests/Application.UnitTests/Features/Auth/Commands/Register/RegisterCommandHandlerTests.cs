@@ -1,9 +1,8 @@
-using Application.Common.Exceptions;
 using Application.Features.Auth.Commands.Register;
 using Application.UnitTests.Common;
+using Domain.Common;
 using Domain.Constants;
 using Domain.Entities;
-using Domain.Exceptions;
 
 namespace Application.UnitTests.Features.Auth.Commands.Register;
 
@@ -22,9 +21,10 @@ public class RegisterCommandHandlerTests
         var hasher = new FakePasswordHasher();
         var handler = new RegisterCommandHandler(context, hasher);
 
-        var id = await handler.Handle(ValidCommand(), CancellationToken.None);
+        var result = await handler.Handle(ValidCommand(), CancellationToken.None);
 
-        var persisted = await context.Users.FindAsync(id);
+        Assert.True(result.IsSuccess);
+        var persisted = await context.Users.FindAsync(result.Value);
         Assert.NotNull(persisted);
         Assert.Equal("new@example.com", persisted!.Email);
         Assert.Equal(hasher.Hash("password123"), persisted.PasswordHash);
@@ -34,7 +34,7 @@ public class RegisterCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_throws_ValidationException_for_a_duplicate_email()
+    public async Task Handle_returns_a_Conflict_failure_for_a_duplicate_email()
     {
         await using var context = TestApplicationDbContextFactory.Create();
         context.Roles.Add(new Role { Name = RoleNames.User });
@@ -52,12 +52,14 @@ public class RegisterCommandHandlerTests
 
         var handler = new RegisterCommandHandler(context, hasher);
 
-        await Assert.ThrowsAsync<ValidationException>(() =>
-            handler.Handle(ValidCommand(email: "new@example.com", userName: "newuser"), CancellationToken.None));
+        var result = await handler.Handle(ValidCommand(email: "new@example.com", userName: "newuser"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Conflict, result.Error.Type);
     }
 
     [Fact]
-    public async Task Handle_throws_ValidationException_for_a_duplicate_username()
+    public async Task Handle_returns_a_Conflict_failure_for_a_duplicate_username()
     {
         await using var context = TestApplicationDbContextFactory.Create();
         var hasher = new FakePasswordHasher();
@@ -74,17 +76,22 @@ public class RegisterCommandHandlerTests
 
         var handler = new RegisterCommandHandler(context, hasher);
 
-        await Assert.ThrowsAsync<ValidationException>(() =>
-            handler.Handle(ValidCommand(email: "new@example.com", userName: "newuser"), CancellationToken.None));
+        var result = await handler.Handle(ValidCommand(email: "new@example.com", userName: "newuser"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.Conflict, result.Error.Type);
     }
 
     [Fact]
-    public async Task Handle_throws_NotFoundException_when_the_default_role_is_missing()
+    public async Task Handle_returns_a_NotFound_failure_when_the_default_role_is_missing()
     {
         await using var context = TestApplicationDbContextFactory.Create();
         var hasher = new FakePasswordHasher();
         var handler = new RegisterCommandHandler(context, hasher);
 
-        await Assert.ThrowsAsync<NotFoundException>(() => handler.Handle(ValidCommand(), CancellationToken.None));
+        var result = await handler.Handle(ValidCommand(), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(ErrorType.NotFound, result.Error.Type);
     }
 }

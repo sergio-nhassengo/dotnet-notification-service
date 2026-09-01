@@ -1,31 +1,13 @@
-﻿services:
+services:
   api:
     image: api
     build:
       context: .
       dockerfile: Api/Dockerfile
-
-  application:
-    image: application
-    build:
-      context: .
-      dockerfile: Application/Dockerfile
-
-  domain:
-    image: domain
-    build:
-      context: .
-      dockerfile: Domain/Dockerfile
-
-  infra:
-    image: infra
-    build:
-      context: .
-      dockerfile: Infrastructure/Dockerfile
-
-  persistence:
-    image: persistence
-    build:
-      context: .
-      dockerfile: Persistence/Dockerfile
-
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ConnectionStrings__Default: ${DB_CONNECTION_STRING}
+      ConnectionStrings__Logging: ${LOGGING_DB_CONNECTION_STRING}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY}

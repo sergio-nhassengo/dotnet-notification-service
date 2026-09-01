@@ -1,14 +1,15 @@
 using Application.Common.Interfaces;
+using Domain.Common;
 using Domain.Entities;
 using MediatR;
 
 namespace Application.Features.TodoItem.Commands.CreateTodoItem;
 
-public record CreateTodoItemCommand(int TodoListId, string Title, bool Done) : IRequest<int>;
+public record CreateTodoItemCommand(int TodoListId, string Title, bool Done) : IRequest<Result<int>>;
 
-public class CreateTodoItemCommandHandler(IApplicationDbContext context) : IRequestHandler<CreateTodoItemCommand, int>
+public class CreateTodoItemCommandHandler(IApplicationDbContext context) : IRequestHandler<CreateTodoItemCommand, Result<int>>
 {
-    public async Task<int> Handle(CreateTodoItemCommand request, CancellationToken cancellationToken)
+    public async Task<Result<int>> Handle(CreateTodoItemCommand request, CancellationToken cancellationToken)
     {
         var entity = new Domain.Entities.TodoItem
         {

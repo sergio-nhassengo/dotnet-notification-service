@@ -1,12 +1,10 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Common.Exceptions;
 using Application.Common.Interfaces;
 using Application.Common.Security;
+using Domain.Common;
 using Domain.Constants;
 using Domain.Entities;
-using Domain.Exceptions;
-using FluentValidation.Results;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,21 +16,19 @@ public record RegisterCommand(
     string LastName,
     string UserName,
     string? MobilePhone,
-    string Password) : IRequest<int>;
+    string Password) : IRequest<Result<int>>;
 
 public class RegisterCommandHandler(IApplicationDbContext context, IPasswordHasher passwordHasher)
-    : IRequestHandler<RegisterCommand, int>
+    : IRequestHandler<RegisterCommand, Result<int>>
 {
-    public async Task<int> Handle(RegisterCommand request, CancellationToken cancellationToken)
+    public async Task<Result<int>> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
         var isDuplicate = await context.Users
             .AnyAsync(u => u.Email == request.Email || u.UserName == request.UserName, cancellationToken);
 
         if (isDuplicate)
         {
-            throw new ValidationException([
-                new ValidationFailure(nameof(request.Email), "Email or username is already registered.")
-            ]);
+            return Result.Failure<int>(Error.Conflict("User.DuplicateEmailOrUserName", "Email or username is already registered."));
         }
 
         // Self-registration always gets the default "User" role - never let the caller pick a role.
@@ -41,7 +37,7 @@ public class RegisterCommandHandler(IApplicationDbContext context, IPasswordHash
 
         if (role is null)
         {
-            throw new NotFoundException(nameof(Role), RoleNames.User);
+            return Result.Failure<int>(Error.EntityNotFound(nameof(Role), RoleNames.User));
         }
 
         var entity = new User

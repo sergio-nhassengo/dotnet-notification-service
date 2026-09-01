@@ -213,8 +213,8 @@ exist yet, or you want the generated slice to differ from the entity's actual sh
 feature crud --feature Categories --entity Category --properties "Title:string,Description:string?"
 ```
 
-Either way you get five complete, working (not stubbed) features in one call, modeled directly on this
-template's own `TodoLists` feature:
+Either way you get five complete, working (not stubbed) features plus a controller in one call, modeled
+directly on this template's own `TodoLists` feature:
 
 ```
 Application/Features/Categories/
@@ -225,11 +225,17 @@ Application/Features/Categories/
 └── Queries/
     ├── GetCategoryById/   GetCategoryByIdQuery.cs, GetCategoryByIdQueryHandler.cs
     └── GetCategories/     GetCategoriesQuery.cs, GetCategoriesQueryHandler.cs, CategoryDto.cs
+
+Api/Controllers/
+└── CategoriesController.cs   GET/GET-by-id/POST/PUT/DELETE wired to the commands/queries above
 ```
 
 Each handler is fully implemented against `context.Categories` (add/save, `FirstOrDefaultAsync` + `NotFoundException`,
 AutoMapper `ProjectTo`), and `CategoryDto` is generated once under `GetCategories/` and shared by both queries —
-exactly the pattern `TodoListDto` follows for `TodoLists`. The only other thing left to you is registering
+exactly the pattern `TodoListDto` follows for `TodoLists`. `CategoriesController` (found by searching for
+`<ApiProject>.csproj`, default `Api`) follows the same `BaseController`/`Mediator` pattern as
+`TodoListsController` — no constructor injection, just `[HttpGet]`/`[HttpPost]`/etc. methods that call
+`this.Mediator.Send(...)`. Pass `--no-controller` to skip it. The only other thing left to you is registering
 `Category` on `IApplicationDbContext`/`ApplicationDbContext` and adding an EF configuration/migration.
 
 By default `crud` naively pluralizes the entity name by appending `s` (`Category` → `Categorys`) — pass
@@ -251,7 +257,10 @@ By default `crud` naively pluralizes the entity name by appending `s` (`Category
 | `--project-path <path>` | all | Explicit path to the target `.csproj`, skips project discovery |
 | `--dbcontext <TypeName>` | all | DbContext interface type used by the handler (default: `IApplicationDbContext`) |
 | `--dbcontext-namespace <ns>` | all | Namespace of that interface (default: `<RootNamespace>.Common.Interfaces`) |
-| `--force` | all | Overwrite the target folder(s) if they already exist and aren't empty |
+| `--api-project <Name>` | `crud` | `.csproj` to generate the controller into, matched by file name (default: `Api`) |
+| `--api-project-path <path>` | `crud` | Explicit path to the target API `.csproj`, skips project discovery |
+| `--no-controller` | `crud` | Skip generating the `{Plural}Controller.cs` |
+| `--force` | all | Overwrite the target folder(s)/controller file if they already exist |
 
 Run `dotnet run --project tools/FeatureCli -- --help` (or `feature --help` once installed) for the same
 reference at any time.
