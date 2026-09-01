@@ -1,0 +1,23 @@
+image: mcr.microsoft.com/dotnet/sdk:10.0
+
+definitions:
+  services:
+    docker:
+      memory: 3072
+  caches:
+    dotnet: ~/.nuget/packages
+
+pipelines:
+  default:
+    - step:
+        name: Build and test
+        size: 2x
+        services:
+          - docker
+        caches:
+          - dotnet
+        script:
+          - export TESTCONTAINERS_RYUK_DISABLED=true
+          - dotnet restore MPDCApiTemplate.sln
+          - dotnet build MPDCApiTemplate.sln --no-restore
+          - dotnet test MPDCApiTemplate.sln --no-build
