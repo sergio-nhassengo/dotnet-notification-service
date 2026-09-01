@@ -25,6 +25,11 @@ public class ApplicationDbContext(
     public DbSet<Role> Roles => Set<Role>();
     
     public DbSet<Book> Books => Set<Book>();
+    public DbSet<EmailNotification> EmailNotifications => Set<EmailNotification>();
+    public DbSet<DeliveryAttempt> DeliveryAttempts => Set<DeliveryAttempt>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
+    public DbSet<NotificationReplay> NotificationReplays => Set<NotificationReplay>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

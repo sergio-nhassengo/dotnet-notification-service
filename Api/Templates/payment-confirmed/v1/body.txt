@@ -1,0 +1,3 @@
+Hello {{customerName}},
+
+Your payment {{paymentReference}} has been confirmed.

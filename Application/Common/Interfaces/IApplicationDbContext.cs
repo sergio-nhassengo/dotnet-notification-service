@@ -17,5 +17,11 @@ public interface IApplicationDbContext
 
     DbSet<Book> Books { get; }
 
+    DbSet<EmailNotification> EmailNotifications { get; }
+    DbSet<DeliveryAttempt> DeliveryAttempts { get; }
+    DbSet<OutboxMessage> OutboxMessages { get; }
+    DbSet<InboxMessage> InboxMessages { get; }
+    DbSet<NotificationReplay> NotificationReplays { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

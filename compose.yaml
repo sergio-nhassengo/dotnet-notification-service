@@ -11,3 +11,7 @@ services:
       ConnectionStrings__Default: ${DB_CONNECTION_STRING}
       ConnectionStrings__Logging: ${LOGGING_DB_CONNECTION_STRING}
       Jwt__SigningKey: ${JWT_SIGNING_KEY}
+      Kafka__BootstrapServers: ${KAFKA_BOOTSTRAP_SERVERS}
+      EmailProvider__Provider: ${EMAIL_PROVIDER:-Fake}
+      EmailProvider__ApiKey: ${BREVO_API_KEY:-}
+      EmailProvider__DefaultSenderEmail: ${EMAIL_SENDER_ADDRESS:-no-reply@example.invalid}

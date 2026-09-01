@@ -5,7 +5,7 @@ namespace Domain.Common;
 
 public abstract class BaseEntity<T>
 {
-    public T Id { get; set; }
+    public T Id { get; set; } = default!;
 
     private readonly List<DomainEvent> _domainEvents = [];
     public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();

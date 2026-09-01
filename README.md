@@ -3,6 +3,126 @@
 An ASP.NET Core 10 Web API template built on Clean Architecture, with CQRS (MediatR), JWT authentication,
 EF Core / SQL Server persistence, and OpenTelemetry-based observability wired in out of the box.
 
+## Email notification service
+
+The repository now includes a production-oriented, email-only notification pipeline. Its channel-neutral application
+boundaries (`IEmailProvider`, renderer, Kafka publisher, and persistence store) allow SMS, push, or WhatsApp adapters to
+be added without changing the email workflow. The API and workers remain in the existing single host; registrations are
+modular so workers can be split into another executable later.
+
+```mermaid
+sequenceDiagram
+    participant Caller
+    participant API
+    participant DB as SQL Server
+    participant Kafka
+    participant Consumer
+    participant Delivery
+    participant Provider
+    Caller->>API: POST /api/v1/notifications/email
+    API->>DB: notification + outbox (one transaction)
+    API-->>Caller: 202 Accepted
+    DB->>Kafka: outbox worker publishes EmailRequestedV1
+    Kafka->>Consumer: primary-topic-notification
+    Consumer->>DB: inbox + queued notification (one transaction)
+    Consumer->>Kafka: commit offset after persistence
+    Delivery->>DB: lease due notification
+    Delivery->>Provider: rendered HTML + plain text
+    Delivery->>DB: result + attempt history
+```
+
+```mermaid
+flowchart LR
+    Due[Due delivery] --> Send[Provider call]
+    Send -->|success| Sent[Sent]
+    Send -->|transient / 429| Retry[Persist next attempt with jitter]
+    Retry -->|attempts remain| Due
+    Retry -->|exhausted| Failed[Persist failure + DLQ outbox]
+    Send -->|permanent / invalid template| Failed
+    Send -->|401 / 403| Ops[Critical configuration failure]
+    Ops --> Failed
+    Failed --> DLQ[dlq-topic-notification]
+    DLQ --> Replay[Authorized controlled replay]
+```
+
+### Request and status API
+
+All notification operations use the existing JWT authentication fallback policy. Replay additionally requires the
+`RequireAdmin` policy. Writes are limited to 60 requests per minute per authenticated identity/IP and request bodies to
+64 KiB.
+
+```bash
+curl -i -X POST https://localhost:5001/api/v1/notifications/email \
+  -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" \
+  -d '{"idempotencyKey":"payment-123-confirmation","correlationId":"payment-123","recipient":{"email":"customer@example.com","name":"Customer Name"},"templateId":"payment-confirmed","templateVersion":1,"variables":{"customerName":"Customer Name","paymentReference":"PAY-123"},"subject":null,"priority":"Normal","scheduledAt":null}'
+
+curl -H "Authorization: Bearer $ACCESS_TOKEN" \
+  https://localhost:5001/api/v1/notifications/NOTIFICATION_ID
+
+curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
+  https://localhost:5001/api/v1/notifications/NOTIFICATION_ID/replay
+```
+
+The POST returns `202 Accepted`, a `Location` header, and `notificationId`, `messageId`, and current `status`. Reusing an
+idempotency key returns that original notification. Status includes safe failure fields and attempt summaries; provider
+exceptions, credentials, message bodies, and template variables are never returned.
+
+### Reliability model
+
+- REST acceptance commits the notification and `EmailRequestedV1` outbox row atomically. Bounded outbox batches are
+  claimed with expiring SQL Server leases, published with Kafka `acks=all` and idempotent production, then acknowledged.
+- Direct Kafka input converges on the same notification/delivery tables. `notification-service-email-v1` disables auto
+  commit/store and commits only after a unique inbox row and delivery state are durable. Invalid/unsupported contracts
+  are safely described and sent to the DLQ through an outbox row.
+- Delivery is persisted and independently leased. The default schedule is immediate, approximately 1, 5, and 15 minutes,
+  then 1 hour, with ±20% jitter. Timeouts, network errors, 408, 429, and 5xx are transient. Invalid content and recipients
+  are permanent. Provider 401/403 responses are configuration failures and are not aggressively retried.
+- Permanent/exhausted failures atomically create a DLQ outbox record and retain attempt history. The service deliberately
+  does not consume the DLQ. Admin replay appends a `NotificationReplays` audit row and schedules a validated new attempt.
+- Delivery is at least once. There is an unavoidable crash window after a provider accepts a message but before local
+  success is committed. `MessageId` is supplied as the provider idempotency key where supported; without provider-side
+  idempotency, exactly-once email delivery cannot be guaranteed.
+
+An application publishing directly to Kafka must use an outbox in its own database when publication is coupled to its
+business transaction. This service cannot make another application's database mutation atomic with Kafka publication.
+
+### Kafka prerequisites
+
+Kafka is external and is intentionally absent from `compose.yaml`. Provision these existing topics:
+
+| Topic | Partitions | Replication | Min ISR | Cleanup | Retention | Max message |
+|---|---:|---:|---:|---|---:|---:|
+| `primary-topic-notification` | 6 | 3 | 2 | delete | 3 days | 1,048,576 bytes |
+| `dlq-topic-notification` | 3 | 3 | 2 | delete | 30 days | 1,048,576 bytes |
+
+Topic and group names are configuration, not code constants. JSON contracts carry `ContractVersion`; `MessageId` is the
+Kafka key, while correlation, causation, and schema version are headers. Kafka payloads contain no attachments or binary
+content.
+
+### Notification configuration
+
+Safe defaults are in `Api/appsettings.json`. Production should override values using environment variables or the
+deployment secret store, for example `Kafka__BootstrapServers`, `EmailProvider__Provider=Brevo`,
+`EmailProvider__ApiKey`, and `EmailProvider__DefaultSenderEmail`. No real credential belongs in appsettings or source.
+Brevo uses one `IHttpClientFactory` client with a configured timeout; `Fake` is the local/test provider. Sender and
+template allow-lists prevent open-relay behavior, subject overrides are disabled by default, and file templates are
+versioned under `Api/Templates/<template-id>/v<version>`. Identifiers are strictly checked against path traversal,
+required variables are validated, and HTML substitutions are encoded.
+
+Important option sections are `Kafka`, `Outbox`, `EmailDelivery`, `EmailProvider`, and `EmailTemplates`. Options use
+startup validation. Apply the schema and run with:
+
+```bash
+dotnet restore MPDCApiTemplate.sln
+dotnet ef database update --project Persistence --startup-project Api
+dotnet run --project Api
+```
+
+Health endpoints are `/health/live` (process only) and `/health/ready` (SQL Server, Kafka, and email configuration).
+Serilog fields and OpenTelemetry spans/metrics cover notification/message/correlation IDs, Kafka coordinates, provider,
+attempt, outcome, and duration without logging recipients or content. Metrics include request/sent/failure/retry/DLQ
+counters, provider duration, Kafka lag, and pending/oldest-age gauges for outbox and delivery work.
+
 ## Architecture
 
 The solution is split into five projects, each with a single direction of dependency (outer layers depend on

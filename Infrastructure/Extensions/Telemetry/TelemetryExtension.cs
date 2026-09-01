@@ -25,6 +25,7 @@ public static class TelemetryExtension
             .WithTracing(builder =>
             {
                 builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName))
+                    .AddSource(Notifications.NotificationTelemetry.SourceName)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddSqlClientInstrumentation();
@@ -45,6 +46,7 @@ public static class TelemetryExtension
             .WithMetrics(builder =>
             {
                 builder.AddAspNetCoreInstrumentation()
+                    .AddMeter(Notifications.NotificationTelemetry.SourceName)
                     .AddHttpClientInstrumentation()
                     .AddSqlClientInstrumentation()
                     .AddHangfireInstrumentation();
