@@ -5,7 +5,6 @@ using Infrastructure.Extensions.Auth;
 using Infrastructure.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace MPDCApiTemplate.Controllers;
 
@@ -14,7 +13,6 @@ namespace MPDCApiTemplate.Controllers;
 public sealed class NotificationsController : BaseController
 {
     [HttpPost("email")]
-    [EnableRateLimiting("notification-write")]
     public async Task<ActionResult<EmailAcceptedResponse>> Create(CreateEmailNotificationCommand command, CancellationToken ct)
     {
         var result = await Mediator.Send(command, ct);
@@ -29,7 +27,6 @@ public sealed class NotificationsController : BaseController
 
     [HttpPost("{notificationId:guid}/replay")]
     [Authorize(Policy = AuthPolicies.RequireAdmin)]
-    [EnableRateLimiting("notification-write")]
     public async Task<IActionResult> Replay(Guid notificationId, CancellationToken ct) =>
         HandleResult(await Mediator.Send(new ReplayEmailNotificationCommand(notificationId), ct));
 }

@@ -12,7 +12,6 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,13 +29,16 @@ builder.Services
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
-builder.Services.AddRateLimiter(options => options.AddPolicy("notification-write", httpContext =>
-    RateLimitPartition.GetFixedWindowLimiter(
-        httpContext.User.Identity?.Name ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 })));
 builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>("database", tags: ["ready"]);
 
 var app = builder.Build();
+
+if (builder.Configuration["Database:Provider"]?.Equals("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
 
 app.MapOpenApi().WithMetadata(new AllowAnonymousAttribute());
 
@@ -53,8 +55,6 @@ app.UseCors(CorsExtension.DefaultPolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseRateLimiter();
-
 app.MapControllers();
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false }).AllowAnonymous();
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") }).AllowAnonymous();
@@ -63,4 +63,3 @@ app.Run();
 
 // Exposed so Unit Tests can bootstrap this host during tests.
 public partial class Program;
-

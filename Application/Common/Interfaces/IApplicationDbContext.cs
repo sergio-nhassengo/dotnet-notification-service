@@ -7,15 +7,9 @@ namespace Application.Common.Interfaces;
 
 public interface IApplicationDbContext
 {
-    DbSet<TodoList> TodoLists { get; }
-
-    DbSet<TodoItem> TodoItems { get; }
-
     DbSet<User> Users { get; }
 
     DbSet<Role> Roles { get; }
-
-    DbSet<Book> Books { get; }
 
     DbSet<EmailNotification> EmailNotifications { get; }
     DbSet<DeliveryAttempt> DeliveryAttempts { get; }

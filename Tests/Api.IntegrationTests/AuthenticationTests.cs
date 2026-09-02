@@ -21,7 +21,7 @@ public class AuthenticationTests(ApiWebApplicationFactory factory) : IClassFixtu
     {
         var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/api/TodoLists");
+        var response = await client.GetAsync("/api/v1/notifications/00000000-0000-0000-0000-000000000000");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -38,7 +38,7 @@ public class AuthenticationTests(ApiWebApplicationFactory factory) : IClassFixtu
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", fakeToken);
 
-        var response = await client.GetAsync("/api/TodoLists");
+        var response = await client.GetAsync("/api/v1/notifications/00000000-0000-0000-0000-000000000000");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -147,7 +147,7 @@ public class AuthenticationTests(ApiWebApplicationFactory factory) : IClassFixtu
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var response = await client.GetAsync("/api/TodoLists");
+        var response = await client.GetAsync("/api/v1/notifications/00000000-0000-0000-0000-000000000000");
 
         // Reaching the handler (and hitting the database) proves authentication succeeded -
         // anything other than 401/403 here means the token was accepted.

@@ -93,6 +93,9 @@ artifacts/
 # Publish output
 publish/
 Api/logs
+*.db
+*.db-shm
+*.db-wal
 nuget-local-feed
 
 # Local environment overrides for docker compose (copy from .env.example)

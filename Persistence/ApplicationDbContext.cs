@@ -7,6 +7,8 @@ using Domain.Common;
 using Domain.Entities;
 using Domain.Events;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Persistence;
 
@@ -16,15 +18,10 @@ public class ApplicationDbContext(
     ICurrentUserService currentUserService)
     : DbContext(options), IApplicationDbContext
 {
-    public DbSet<TodoList> TodoLists => Set<TodoList>();
-
-    public DbSet<TodoItem> TodoItems => Set<TodoItem>();
-
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Role> Roles => Set<Role>();
     
-    public DbSet<Book> Books => Set<Book>();
     public DbSet<EmailNotification> EmailNotifications => Set<EmailNotification>();
     public DbSet<DeliveryAttempt> DeliveryAttempts => Set<DeliveryAttempt>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
@@ -37,6 +34,30 @@ public class ApplicationDbContext(
         builder.Ignore<DomainEvent>();
 
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        // SQLite cannot translate comparisons or ordering for DateTimeOffset values.
+        // Store them as UTC ticks locally so worker lease/scheduling queries remain server-side.
+        if (Database.IsSqlite())
+        {
+            var converter = new DateTimeOffsetToBinaryConverter();
+
+            foreach (var property in builder.Model.GetEntityTypes()
+                         .SelectMany(entityType => entityType.GetProperties())
+                         .Where(property => property.ClrType == typeof(DateTimeOffset) ||
+                                            property.ClrType == typeof(DateTimeOffset?)))
+            {
+                property.SetValueConverter(converter);
+            }
+
+            // SQL Server generates rowversion values; SQLite does not. Keep the
+            // concurrency token but persist the entity's byte array value locally.
+            foreach (var property in builder.Model.GetEntityTypes()
+                         .SelectMany(entityType => entityType.GetProperties())
+                         .Where(property => property.ClrType == typeof(byte[]) && property.IsConcurrencyToken))
+            {
+                property.ValueGenerated = ValueGenerated.Never;
+            }
+        }
 
         base.OnModelCreating(builder);
     }

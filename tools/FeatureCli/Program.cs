@@ -449,8 +449,8 @@ static void PrintUsage()
       --no-controller                 Skip generating the ASP.NET controller
 
     Examples:
-      feature query   --feature TodoLists --entity TodoList --name GetTodoListById
-      feature command --feature TodoLists --entity TodoList --name DeleteTodoList
+      feature query   --feature Products --entity Product --name GetProductById
+      feature command --feature Products --entity Product --name DeleteProduct
       feature crud    --feature Categories --entity Category --plural Categories
       feature crud    --feature Categories --entity Category --properties "Title:string,Description:string?"
 
@@ -458,7 +458,7 @@ static void PrintUsage()
     'crud' generates a full working set for one entity - Create/Update/Delete commands and GetById/GetAll
     queries (with handlers, validators, and a shared Dto), each under its own <Name>/ folder, plus a
     {Plural}Controller.cs wired up to those commands/queries (found by searching for '<ApiProject>.csproj',
-    default 'Api'), following the exact same pattern as the TodoLists feature already in this template.
+    default 'Api'), following the template's BaseController/Mediator pattern.
     Pass --no-controller to skip the controller. Create the entity class first
     (e.g. Domain/Entities/Category.cs) and 'crud' will read its properties automatically - no --properties
     needed unless the entity doesn't exist yet or you want a different property set than the entity has.

@@ -220,8 +220,37 @@ Configuration lives in `Api/appsettings.json` and `Api/appsettings.Development.j
 dotnet run --project Api
 ```
 
+In `Development`, the API uses a local SQLite database (`mpdca-development.db`) and creates its schema on first
+startup, so SQL Server is not required for day-to-day development. Delete that ignored file whenever you want a clean
+local database. Kafka remains enabled in Development and expects the brokers configured under `Kafka:BootstrapServers`
+to be running. Production continues to default to SQL Server and Kafka and uses the migrations in `Persistence/Migrations`.
+
+When Rider runs the API through `compose.yaml`, the API listens on host port `8080` and joins the external
+`kafka_default` Docker network. It reaches Kafka through the brokers' internal addresses (`kafka-1:9092`,
+`kafka-2:9092`, and `kafka-3:9092`), not through `localhost`. Start the separate Kafka Compose project first so
+that network exists.
+
+To exercise SQL Server while developing, override the provider and connection string:
+
+```bash
+Database__Provider=SqlServer \
+ConnectionStrings__Default='Server=localhost,1433;Database=MPDCApiTemplate;User Id=sa;Password=...;TrustServerCertificate=True' \
+dotnet run --project Api
+```
+
 By default the API serves Swagger UI at `/swagger` (backed by the OpenAPI document at `/openapi/v1.json`).
 A `diagnostics/throw-exception` endpoint is included to exercise the global exception handler.
+
+### Postman API tests
+
+Import `postman/MPDCApiTemplate.postman_collection.json` and
+`postman/MPDCApiTemplate.Docker.postman_environment.json`, select the **MPDCApiTemplate - Rider Docker** environment,
+and run the collection in order. It creates a unique user, captures its JWT and notification ID, then exercises health,
+authentication, notification/idempotency, authorization, validation, and diagnostics scenarios. The environment targets
+`http://localhost:8080`; change `baseUrl` to `http://localhost:5290` when running the API directly instead of through Rider/Docker.
+
+Admin replay requires an existing Admin user: set `adminUsername` and the secret `adminPassword` environment variable
+before running that request. Replay also requires a notification in `PermanentlyFailed` or `DeadLettered` state.
 
 ### Database migrations
 
@@ -284,24 +313,24 @@ a full working Create/Read/Update/Delete set for one entity in one shot.
 ### `query` / `command` — single request
 
 ```bash
-feature query   --feature TodoLists --entity TodoList --name GetTodoListById
+feature query   --feature Products --entity Product --name GetProductById
 ```
 
 generates:
 
 ```
-Application/Features/TodoLists/Queries/GetTodoListById/
-├── GetTodoListByIdQuery.cs         # public record GetTodoListByIdQuery : IRequest<GetTodoListByIdResponse>;
-├── GetTodoListByIdQueryHandler.cs  # handler stub, throws NotImplementedException with a TODO
-└── GetTodoListByIdResponse.cs      # empty response DTO, TODO to fill in properties
+Application/Features/Products/Queries/GetProductById/
+├── GetBookByIdQuery.cs         # public record GetBookByIdQuery : IRequest<GetBookByIdResponse>;
+├── GetBookByIdQueryHandler.cs  # handler stub, throws NotImplementedException with a TODO
+└── GetBookByIdResponse.cs      # empty response DTO, TODO to fill in properties
 ```
 
 ```bash
-feature command --feature TodoLists --entity TodoList --name DeleteTodoList
+feature command --feature Products --entity Product --name DeleteProduct
 ```
 
-generates the command equivalent — `DeleteTodoListCommand.cs`, `DeleteTodoListCommandHandler.cs`, and
-`DeleteTodoListCommandValidator.cs` — each with a `// TODO` marking the part you still need to write.
+generates the command equivalent — `DeleteBookCommand.cs`, `DeleteBookCommandHandler.cs`, and
+`DeleteBookCommandValidator.cs` — each with a `// TODO` marking the part you still need to write.
 
 ### `crud` — a full CRUD slice for one entity
 
@@ -333,8 +362,7 @@ exist yet, or you want the generated slice to differ from the entity's actual sh
 feature crud --feature Categories --entity Category --properties "Title:string,Description:string?"
 ```
 
-Either way you get five complete, working (not stubbed) features plus a controller in one call, modeled
-directly on this template's own `TodoLists` feature:
+Either way you get five complete, working (not stubbed) features plus a controller in one call:
 
 ```
 Application/Features/Categories/
@@ -352,9 +380,8 @@ Api/Controllers/
 
 Each handler is fully implemented against `context.Categories` (add/save, `FirstOrDefaultAsync` + `NotFoundException`,
 AutoMapper `ProjectTo`), and `CategoryDto` is generated once under `GetCategories/` and shared by both queries —
-exactly the pattern `TodoListDto` follows for `TodoLists`. `CategoriesController` (found by searching for
-`<ApiProject>.csproj`, default `Api`) follows the same `BaseController`/`Mediator` pattern as
-`TodoListsController` — no constructor injection, just `[HttpGet]`/`[HttpPost]`/etc. methods that call
+`CategoriesController` (found by searching for `<ApiProject>.csproj`, default `Api`) follows the template's
+`BaseController`/`Mediator` pattern — no constructor injection, just `[HttpGet]`/`[HttpPost]`/etc. methods that call
 `this.Mediator.Send(...)`. Pass `--no-controller` to skip it. The only other thing left to you is registering
 `Category` on `IApplicationDbContext`/`ApplicationDbContext` and adding an EF configuration/migration.
 
@@ -365,9 +392,9 @@ By default `crud` naively pluralizes the entity name by appending `s` (`Category
 
 | Option | Applies to | Description |
 |---|---|---|
-| `-f, --feature <FeatureFolder>` | all | Feature folder name, e.g. `TodoLists` (required) |
+| `-f, --feature <FeatureFolder>` | all | Feature folder name, e.g. `Products` (required) |
 | `-e, --entity <EntityName>` | all | Entity the feature operates on (required) |
-| `-n, --name <QueryName\|CommandName>` | `query`, `command` | Name of the query/command, e.g. `GetTodoListById` (required) |
+| `-n, --name <QueryName\|CommandName>` | `query`, `command` | Name of the query/command, e.g. `GetBookById` (required) |
 | `--properties <spec>` | `crud` | Comma-separated `Name:Type` pairs for the entity, e.g. `"Title:string,Notes:string?"`. Omit to auto-detect from the entity's own class file instead |
 | `--entity-project <Name>` | `crud` | Project to search for `<EntityName>.cs` when auto-detecting (default: `Domain`) |
 | `--entity-path <path>` | `crud` | Explicit path to the entity's `.cs` file, skips entity-file discovery |

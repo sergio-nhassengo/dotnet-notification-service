@@ -52,30 +52,35 @@ public static class DependencyInjection
         services.AddScoped<IEmailProvider>(sp => sp.GetRequiredService<IOptions<EmailProviderOptions>>().Value.Provider.Equals("Brevo", StringComparison.OrdinalIgnoreCase)
             ? sp.GetRequiredService<BrevoEmailProvider>() : sp.GetRequiredService<FakeEmailProvider>());
         var kafka = configuration.GetSection(KafkaOptions.SectionName).Get<KafkaOptions>() ?? new KafkaOptions();
-        var producerConfig = new ProducerConfig
+        if (kafka.Enabled)
         {
-            BootstrapServers = kafka.BootstrapServers,
-            EnableIdempotence = true,
-            Acks = Acks.All,
-            SecurityProtocol = Enum.TryParse<SecurityProtocol>(kafka.SecurityProtocol, true, out var protocol) ? protocol : SecurityProtocol.Plaintext
-        };
-        services.AddSingleton<IProducer<string, string>>(_ => new ProducerBuilder<string, string>(producerConfig).Build());
-        services.AddSingleton<IKafkaPublisher, KafkaPublisher>();
-        services.AddSingleton<IConsumer<string, string>>(_ => new ConsumerBuilder<string, string>(new ConsumerConfig
-        {
-            BootstrapServers = kafka.BootstrapServers,
-            GroupId = kafka.ConsumerGroup,
-            EnableAutoCommit = false,
-            EnableAutoOffsetStore = false,
-            AutoOffsetReset = AutoOffsetReset.Earliest,
-            SecurityProtocol = producerConfig.SecurityProtocol
-        }).Build());
-        services.AddSingleton<IAdminClient>(_ => new AdminClientBuilder(new AdminClientConfig { BootstrapServers = kafka.BootstrapServers, SecurityProtocol = producerConfig.SecurityProtocol }).Build());
-        services.AddHostedService<OutboxPublisherWorker>(); services.AddHostedService<KafkaEmailConsumerWorker>();
+            var producerConfig = new ProducerConfig
+            {
+                BootstrapServers = kafka.BootstrapServers,
+                EnableIdempotence = true,
+                Acks = Acks.All,
+                SecurityProtocol = Enum.TryParse<SecurityProtocol>(kafka.SecurityProtocol, true, out var protocol) ? protocol : SecurityProtocol.Plaintext
+            };
+            services.AddSingleton<IProducer<string, string>>(_ => new ProducerBuilder<string, string>(producerConfig).Build());
+            services.AddSingleton<IKafkaPublisher, KafkaPublisher>();
+            services.AddSingleton<IConsumer<string, string>>(_ => new ConsumerBuilder<string, string>(new ConsumerConfig
+            {
+                BootstrapServers = kafka.BootstrapServers,
+                GroupId = kafka.ConsumerGroup,
+                EnableAutoCommit = false,
+                EnableAutoOffsetStore = false,
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                SecurityProtocol = producerConfig.SecurityProtocol
+            }).Build());
+            services.AddSingleton<IAdminClient>(_ => new AdminClientBuilder(new AdminClientConfig { BootstrapServers = kafka.BootstrapServers, SecurityProtocol = producerConfig.SecurityProtocol }).Build());
+            services.AddHostedService<OutboxPublisherWorker>();
+            services.AddHostedService<KafkaEmailConsumerWorker>();
+            services.AddHealthChecks().AddCheck<KafkaHealthCheck>("kafka", tags: ["ready"]);
+        }
         services.AddHostedService<EmailDeliveryWorker>(); services.AddHostedService<OutboxCleanupWorker>();
         services.AddSingleton<NotificationMetrics>(sp => new NotificationMetrics(sp.GetRequiredService<IServiceScopeFactory>(), sp.GetRequiredService<IDateTime>()).Register());
         services.AddHostedService(sp => sp.GetRequiredService<NotificationMetrics>());
-        services.AddHealthChecks().AddCheck<KafkaHealthCheck>("kafka", tags: ["ready"]).AddCheck<EmailProviderConfigurationHealthCheck>("email-provider", tags: ["ready"]);
+        services.AddHealthChecks().AddCheck<EmailProviderConfigurationHealthCheck>("email-provider", tags: ["ready"]);
 
         return services;
     }

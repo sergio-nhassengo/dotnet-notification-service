@@ -103,7 +103,9 @@ public sealed class NotificationStore(ApplicationDbContext db) : INotificationSt
     {
         await using var tx = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable, ct);
         var states = new[] { NotificationStatus.Queued, NotificationStatus.RetryScheduled };
-        var rows = await db.EmailNotifications.Where(x => states.Contains(x.Status) && x.NextAttemptAt <= now && (x.LeaseExpiresAt == null || x.LeaseExpiresAt < now))
+        var rows = await db.EmailNotifications.Where(x => states.Contains(x.Status) &&
+                                                           x.NextAttemptAt.HasValue && x.NextAttemptAt.Value <= now &&
+                                                           (!x.LeaseExpiresAt.HasValue || x.LeaseExpiresAt.Value < now))
             .OrderByDescending(x => x.Priority).ThenBy(x => x.NextAttemptAt).Take(batchSize).ToListAsync(ct);
         foreach (var row in rows) row.Claim(owner, now.Add(lease));
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return rows;

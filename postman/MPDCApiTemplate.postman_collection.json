@@ -1,0 +1,211 @@
+{
+  "info": {
+    "_postman_id": "3f3e36c7-3c83-4a90-a643-8a96a77ee678",
+    "name": "MPDCApiTemplate - Development API Tests",
+    "description": "Development smoke, authentication, notification, authorization, validation, and diagnostics tests. Defaults to the Rider/Docker endpoint on port 8080.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('runId')) {",
+          "  const runId = Date.now().toString();",
+          "  pm.collectionVariables.set('runId', runId);",
+          "  pm.collectionVariables.set('userName', `postman_${runId}`);",
+          "  pm.collectionVariables.set('userEmail', `postman_${runId}@example.com`);",
+          "  pm.collectionVariables.set('idempotencyKey', `postman-email-${runId}`);",
+          "  pm.collectionVariables.set('correlationId', `postman-correlation-${runId}`);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "runId", "value": "" },
+    { "key": "userName", "value": "" },
+    { "key": "userEmail", "value": "" },
+    { "key": "password", "value": "Postman-Test-Password-123!" },
+    { "key": "accessToken", "value": "" },
+    { "key": "adminUsername", "value": "admin" },
+    { "key": "adminPassword", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "notificationId", "value": "00000000-0000-0000-0000-000000000000" },
+    { "key": "idempotencyKey", "value": "" },
+    { "key": "correlationId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1 - Health and discovery",
+      "item": [
+        {
+          "name": "Liveness",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health/live" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Process is live', () => pm.response.to.have.status(200));"] } }]
+        },
+        {
+          "name": "Readiness (SQLite, Kafka, email provider)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health/ready" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Dependencies are ready', () => pm.response.to.have.status(200));", "pm.test('Health body is Healthy', () => pm.expect(pm.response.text()).to.include('Healthy'));"] } }]
+        },
+        {
+          "name": "OpenAPI document",
+          "request": { "method": "GET", "url": "{{baseUrl}}/openapi/v1.json" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('OpenAPI is available', () => pm.response.to.have.status(200));", "pm.test('Response is JSON', () => pm.response.to.be.json);"] } }]
+        }
+      ]
+    },
+    {
+      "name": "2 - Authentication",
+      "item": [
+        {
+          "name": "Register generated user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Tester\",\n  \"userName\": \"{{userName}}\",\n  \"mobilePhone\": \"+258840000000\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/api/Auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('User created', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));", "if (pm.response.code < 300) pm.collectionVariables.set('userId', pm.response.json());"] } }]
+        },
+        {
+          "name": "Login generated user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userName\": \"{{userName}}\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/api/Auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Login succeeds', () => pm.response.to.have.status(200));", "const json = pm.response.json();", "pm.test('JWT returned', () => pm.expect(json.accessToken).to.be.a('string').and.not.empty);", "pm.collectionVariables.set('accessToken', json.accessToken);"] } }]
+        },
+        {
+          "name": "Login with invalid password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userName\": \"{{userName}}\",\n  \"password\": \"incorrect-password\"\n}" },
+            "url": "{{baseUrl}}/api/Auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid credentials rejected', () => pm.response.to.have.status(401));"] } }]
+        },
+        {
+          "name": "Duplicate registration",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Tester\",\n  \"userName\": \"{{userName}}\",\n  \"mobilePhone\": null,\n  \"password\": \"{{password}}\"\n}" },
+            "url": "{{baseUrl}}/api/Auth/register"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Duplicate rejected', () => pm.response.to.have.status(409));"] } }]
+        },
+        {
+          "name": "Admin login (configure credentials)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userName\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}" },
+            "url": "{{baseUrl}}/api/Auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["if (pm.response.code === 200) {", "  const json = pm.response.json();", "  pm.collectionVariables.set('adminToken', json.accessToken);", "  pm.test('Admin role returned', () => pm.expect(json.role).to.eql('Admin'));", "} else {", "  console.warn('Set adminUsername/adminPassword before running admin replay tests.');", "}"] } }]
+        }
+      ]
+    },
+    {
+      "name": "3 - Email notifications",
+      "item": [
+        {
+          "name": "Create email notification",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"idempotencyKey\": \"{{idempotencyKey}}\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"recipient\": {\n    \"email\": \"customer@example.com\",\n    \"name\": \"Postman Customer\"\n  },\n  \"templateId\": \"payment-confirmed\",\n  \"templateVersion\": 1,\n  \"variables\": {\n    \"customerName\": \"Postman Customer\",\n    \"paymentReference\": \"PAY-{{runId}}\"\n  },\n  \"subject\": null,\n  \"priority\": \"Normal\",\n  \"scheduledAt\": null\n}" },
+            "url": "{{baseUrl}}/api/v1/notifications/email"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Notification accepted', () => pm.response.to.have.status(202));", "const json = pm.response.json();", "pm.test('Identifiers returned', () => { pm.expect(json.notificationId).to.be.a('string'); pm.expect(json.messageId).to.be.a('string'); });", "pm.collectionVariables.set('notificationId', json.notificationId);"] } }]
+        },
+        {
+          "name": "Repeat idempotent request",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"idempotencyKey\": \"{{idempotencyKey}}\",\n  \"correlationId\": \"{{correlationId}}\",\n  \"recipient\": { \"email\": \"customer@example.com\", \"name\": \"Postman Customer\" },\n  \"templateId\": \"payment-confirmed\",\n  \"templateVersion\": 1,\n  \"variables\": { \"customerName\": \"Postman Customer\", \"paymentReference\": \"PAY-{{runId}}\" },\n  \"subject\": null,\n  \"priority\": \"Normal\",\n  \"scheduledAt\": null\n}" },
+            "url": "{{baseUrl}}/api/v1/notifications/email"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Duplicate request remains accepted', () => pm.response.to.have.status(202));", "pm.test('Same notification returned', () => pm.expect(pm.response.json().notificationId).to.eql(pm.collectionVariables.get('notificationId')));"] } }]
+        },
+        {
+          "name": "Get notification status",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/notifications/{{notificationId}}"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Status returned', () => pm.response.to.have.status(200));", "pm.test('Correct notification returned', () => pm.expect(pm.response.json().notificationId).to.eql(pm.collectionVariables.get('notificationId')));"] } }]
+        },
+        {
+          "name": "Replay as normal user (forbidden)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/notifications/{{notificationId}}/replay"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Admin policy enforced', () => pm.response.to.have.status(403));"] } }]
+        },
+        {
+          "name": "Replay as admin",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/notifications/{{notificationId}}/replay"
+          },
+          "description": "Requires adminToken and a PermanentlyFailed or DeadLettered notification. A successful replay returns 200; a non-replayable notification returns 409."
+        }
+      ]
+    },
+    {
+      "name": "4 - Validation and security",
+      "item": [
+        {
+          "name": "Protected endpoint without token",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/notifications/{{notificationId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Authentication required', () => pm.response.to.have.status(401));"] } }]
+        },
+        {
+          "name": "Unknown notification",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "url": "{{baseUrl}}/api/v1/notifications/00000000-0000-0000-0000-000000000001"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Missing entity returns 404', () => pm.response.to.have.status(404));"] } }]
+        },
+        {
+          "name": "Invalid email request",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"idempotencyKey\": \"\",\n  \"correlationId\": \"\",\n  \"recipient\": { \"email\": \"not-an-email\", \"name\": null },\n  \"templateId\": \"unknown-template\",\n  \"templateVersion\": 0,\n  \"variables\": {},\n  \"subject\": null,\n  \"priority\": \"Invalid\",\n  \"scheduledAt\": null\n}" },
+            "url": "{{baseUrl}}/api/v1/notifications/email"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Invalid request rejected', () => pm.expect(pm.response.code).to.be.oneOf([400, 401]));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "5 - Diagnostics",
+      "item": [
+        {
+          "name": "Intentional exception (Development only)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/diagnostics/throw-exception" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('Global exception handler returns 500', () => pm.response.to.have.status(500));"] } }]
+        }
+      ]
+    }
+  ]
+}

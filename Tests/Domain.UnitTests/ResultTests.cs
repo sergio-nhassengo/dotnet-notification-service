@@ -55,9 +55,9 @@ public class ResultTests
     [Fact]
     public void EntityNotFound_formats_the_message_like_the_legacy_NotFoundException()
     {
-        var error = Error.EntityNotFound("TodoList", 42);
+        var error = Error.EntityNotFound("Entity", 42);
 
         Assert.Equal(ErrorType.NotFound, error.Type);
-        Assert.Equal("Entity \"TodoList\" (42) was not found.", error.Message);
+        Assert.Equal("Entity \"Entity\" (42) was not found.", error.Message);
     }
 }
