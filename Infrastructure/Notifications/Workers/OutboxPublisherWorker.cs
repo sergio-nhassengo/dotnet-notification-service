@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Application.Common.Interfaces;
 using Application.Features.Notifications.Commands.Outbox;
+using Application.Features.Notifications.Queries.Outbox;
 using Application.Notifications.Interfaces;
 using Application.Notifications.Models;
 using Application.Notifications.Security;
@@ -16,7 +17,6 @@ namespace Infrastructure.Notifications.Workers;
 public sealed class OutboxPublisherWorker(IServiceScopeFactory scopes, IKafkaPublisher publisher,
     IOptions<OutboxOptions> options, IDateTime clock, ILogger<OutboxPublisherWorker> logger) : BackgroundService
 {
-    private readonly string _owner = $"{Environment.MachineName}-{Guid.NewGuid():N}";
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(options.Value.PollingIntervalSeconds));
@@ -31,7 +31,7 @@ public sealed class OutboxPublisherWorker(IServiceScopeFactory scopes, IKafkaPub
     {
         IReadOnlyList<Domain.Entities.OutboxMessage> rows;
         using (var scope = scopes.CreateScope()) rows = await scope.ServiceProvider.GetRequiredService<ISender>()
-            .Send(new ClaimOutboxBatchCommand(_owner, options.Value.BatchSize, clock.Now, TimeSpan.FromMinutes(2)), ct);
+            .Send(new GetPendingOutboxBatchQuery(options.Value.BatchSize, clock.Now), ct);
         foreach (var row in rows)
         {
             try

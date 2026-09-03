@@ -7,7 +7,6 @@ using Domain.Common;
 using Domain.Entities;
 using Domain.Events;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Persistence;
@@ -36,7 +35,7 @@ public class ApplicationDbContext(
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
         // SQLite cannot translate comparisons or ordering for DateTimeOffset values.
-        // Store them as UTC ticks locally so worker lease/scheduling queries remain server-side.
+        // Store them as UTC ticks locally so worker scheduling queries remain server-side.
         if (Database.IsSqlite())
         {
             var converter = new DateTimeOffsetToBinaryConverter();
@@ -47,15 +46,6 @@ public class ApplicationDbContext(
                                             property.ClrType == typeof(DateTimeOffset?)))
             {
                 property.SetValueConverter(converter);
-            }
-
-            // SQL Server generates rowversion values; SQLite does not. Keep the
-            // concurrency token but persist the entity's byte array value locally.
-            foreach (var property in builder.Model.GetEntityTypes()
-                         .SelectMany(entityType => entityType.GetProperties())
-                         .Where(property => property.ClrType == typeof(byte[]) && property.IsConcurrencyToken))
-            {
-                property.ValueGenerated = ValueGenerated.Never;
             }
         }
 

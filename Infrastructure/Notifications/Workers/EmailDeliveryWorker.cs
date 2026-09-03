@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Application.Common.Interfaces;
 using Application.Features.Notifications.Commands.Delivery;
+using Application.Features.Notifications.Queries.Delivery;
 using Application.Notifications.Contracts;
 using Application.Notifications.Interfaces;
 using Application.Notifications.Models;
@@ -22,7 +23,6 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
     INotificationDefaults defaults, IIntegrationEventSerializer serializer, IDateTime clock,
     EmailRetryPolicy retryPolicy, ILogger<EmailDeliveryWorker> logger) : BackgroundService
 {
-    private readonly string _owner = $"{Environment.MachineName}-{Guid.NewGuid():N}";
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(deliveryOptions.Value.PollingIntervalSeconds));
@@ -37,7 +37,7 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
     {
         IReadOnlyList<EmailNotification> rows;
         using (var scope = scopes.CreateScope()) rows = await scope.ServiceProvider.GetRequiredService<ISender>()
-            .Send(new ClaimEmailDeliveryBatchCommand(_owner, deliveryOptions.Value.BatchSize, clock.Now, TimeSpan.FromMinutes(5)), ct);
+            .Send(new GetDueEmailDeliveryBatchQuery(deliveryOptions.Value.BatchSize, clock.Now), ct);
         await Parallel.ForEachAsync(rows, new ParallelOptions { MaxDegreeOfParallelism = deliveryOptions.Value.MaximumConcurrency, CancellationToken = ct }, ProcessOne);
     }
     private async ValueTask ProcessOne(EmailNotification n, CancellationToken ct)

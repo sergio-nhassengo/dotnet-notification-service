@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Infrastructure.Notifications.Workers;
 using Persistence;
@@ -22,6 +24,7 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLi
             // must be started (see InitializeAsync) before the host is built.
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
+                ["Database:Provider"] = "SqlServer",
                 ["ConnectionStrings:Default"] = _dbContainer.GetConnectionString(),
                 ["ConnectionStrings:Logging"] = string.Empty
                 ,
@@ -30,6 +33,12 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLi
         });
         builder.ConfigureServices(services =>
         {
+            services.RemoveAll<ApplicationDbContext>();
+            services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+            services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(_dbContainer.GetConnectionString()));
+
             var workerTypes = new HashSet<Type>
             {
                 typeof(OutboxPublisherWorker), typeof(KafkaEmailConsumerWorker),

@@ -16,7 +16,4 @@ public sealed class OutboxMessage : BaseEntity<Guid>
     public DateTimeOffset NextAttemptAt { get; set; }
     public string? LastError { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
-    public string? LeaseOwner { get; set; }
-    public DateTimeOffset? LeaseExpiresAt { get; set; }
-    public byte[] RowVersion { get; set; } = [];
 }

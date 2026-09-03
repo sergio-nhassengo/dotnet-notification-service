@@ -36,9 +36,6 @@ public sealed class EmailNotification : BaseEntity<Guid>
     public string? OriginalTopic { get; private set; }
     public int? OriginalPartition { get; private set; }
     public long? OriginalOffset { get; private set; }
-    public string? LeaseOwner { get; private set; }
-    public DateTimeOffset? LeaseExpiresAt { get; private set; }
-    public byte[] RowVersion { get; private set; } = [];
     public ICollection<DeliveryAttempt> DeliveryAttempts { get; private set; } = [];
 
     public static EmailNotification Create(Guid messageId, string correlationId, string idempotencyKey,
@@ -81,26 +78,24 @@ public sealed class EmailNotification : BaseEntity<Guid>
     public void MarkSent(string? providerMessageId, DateTimeOffset now)
     {
         Status = NotificationStatus.Sent; SentAt = now; ProviderMessageId = providerMessageId;
-        NextAttemptAt = null; LastErrorCode = null; LastErrorMessage = null; ClearLease(); UpdatedAt = now;
+        NextAttemptAt = null; LastErrorCode = null; LastErrorMessage = null; UpdatedAt = now;
     }
     public void ScheduleRetry(string code, string message, DateTimeOffset nextAttemptAt, DateTimeOffset now)
     {
         Status = NotificationStatus.RetryScheduled; LastErrorCode = code; LastErrorMessage = message;
-        NextAttemptAt = nextAttemptAt; ClearLease(); UpdatedAt = now;
+        NextAttemptAt = nextAttemptAt; UpdatedAt = now;
     }
     public void MarkPermanentlyFailed(string code, string message, DateTimeOffset now)
     {
         Status = NotificationStatus.PermanentlyFailed; FailedAt = now; LastErrorCode = code;
-        LastErrorMessage = message; NextAttemptAt = null; ClearLease(); UpdatedAt = now;
+        LastErrorMessage = message; NextAttemptAt = null; UpdatedAt = now;
     }
-    public void MarkDeadLettered(DateTimeOffset now) { Status = NotificationStatus.DeadLettered; ClearLease(); UpdatedAt = now; }
+    public void MarkDeadLettered(DateTimeOffset now) { Status = NotificationStatus.DeadLettered; UpdatedAt = now; }
     public void Replay(DateTimeOffset now)
     {
         if (Status is not (NotificationStatus.DeadLettered or NotificationStatus.PermanentlyFailed))
             throw new InvalidOperationException("Only failed notifications can be replayed.");
         Status = NotificationStatus.RetryScheduled; NextAttemptAt = now; FailedAt = null;
-        LastErrorCode = null; LastErrorMessage = null; ClearLease(); UpdatedAt = now;
+        LastErrorCode = null; LastErrorMessage = null; UpdatedAt = now;
     }
-    public void Claim(string owner, DateTimeOffset until) { LeaseOwner = owner; LeaseExpiresAt = until; }
-    public void ClearLease() { LeaseOwner = null; LeaseExpiresAt = null; }
 }

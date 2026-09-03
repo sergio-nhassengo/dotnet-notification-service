@@ -16,7 +16,6 @@ public sealed class EmailNotificationConfiguration : IEntityTypeConfiguration<Em
         b.Property(x => x.TemplateVariables).HasMaxLength(20000).IsRequired(); b.Property(x => x.Subject).HasMaxLength(200);
         b.Property(x => x.ProviderMessageId).HasMaxLength(500); b.Property(x => x.LastErrorCode).HasMaxLength(100);
         b.Property(x => x.LastErrorMessage).HasMaxLength(500); b.Property(x => x.OriginalTopic).HasMaxLength(249);
-        b.Property(x => x.LeaseOwner).HasMaxLength(200); b.Property(x => x.RowVersion).IsRowVersion();
         b.HasIndex(x => x.IdempotencyKey).IsUnique(); b.HasIndex(x => x.MessageId).IsUnique(); b.HasIndex(x => x.CorrelationId);
         b.HasIndex(x => new { x.Status, x.NextAttemptAt });
         b.HasMany(x => x.DeliveryAttempts).WithOne(x => x.Notification).HasForeignKey(x => x.NotificationId).OnDelete(DeleteBehavior.Cascade);
@@ -40,7 +39,7 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
     {
         b.ToTable("OutboxMessages"); b.HasKey(x => x.Id); b.Property(x => x.EventType).HasMaxLength(200).IsRequired();
         b.Property(x => x.Topic).HasMaxLength(249).IsRequired(); b.Property(x => x.Payload).IsRequired(); b.Property(x => x.Headers).IsRequired();
-        b.Property(x => x.LastError).HasMaxLength(500); b.Property(x => x.LeaseOwner).HasMaxLength(200); b.Property(x => x.RowVersion).IsRowVersion();
+        b.Property(x => x.LastError).HasMaxLength(500);
         b.HasIndex(x => new { x.ProcessedAt, x.NextAttemptAt }); b.HasIndex(x => x.MessageKey);
     }
 }

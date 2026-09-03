@@ -26,7 +26,7 @@ sequenceDiagram
     Kafka->>Consumer: primary-topic-notification
     Consumer->>DB: inbox + queued notification (one transaction)
     Consumer->>Kafka: commit offset after persistence
-    Delivery->>DB: lease due notification
+    Delivery->>DB: read due notification
     Delivery->>Provider: rendered HTML + plain text
     Delivery->>DB: result + attempt history
 ```
@@ -69,12 +69,13 @@ exceptions, credentials, message bodies, and template variables are never return
 
 ### Reliability model
 
-- REST acceptance commits the notification and `EmailRequestedV1` outbox row atomically. Bounded outbox batches are
-  claimed with expiring SQL Server leases, published with Kafka `acks=all` and idempotent production, then acknowledged.
+- REST acceptance commits the notification and `EmailRequestedV1` outbox row atomically. The single outbox worker reads
+  bounded pending batches, publishes with Kafka `acks=all` and idempotent production, then acknowledges each row.
 - Direct Kafka input converges on the same notification/delivery tables. `notification-service-email-v1` disables auto
   commit/store and commits only after a unique inbox row and delivery state are durable. Invalid/unsupported contracts
   are safely described and sent to the DLQ through an outbox row.
-- Delivery is persisted and independently leased. The default schedule is immediate, approximately 1, 5, and 15 minutes,
+- The single delivery worker reads due notifications and awaits its bounded parallel batch before polling again. The
+  default schedule is immediate, approximately 1, 5, and 15 minutes,
   then 1 hour, with ±20% jitter. Timeouts, network errors, 408, 429, and 5xx are transient. Invalid content and recipients
   are permanent. Provider 401/403 responses are configuration failures and are not aggressively retried.
 - Permanent/exhausted failures atomically create a DLQ outbox record and retain attempt history. The service deliberately
@@ -82,6 +83,12 @@ exceptions, credentials, message bodies, and template variables are never return
 - Delivery is at least once. There is an unavoidable crash window after a provider accepts a message but before local
   success is committed. `MessageId` is supplied as the provider idempotency key where supported; without provider-side
   idempotency, exactly-once email delivery cannot be guaranteed.
+
+Production initially runs exactly one notification-service replica, with one outbox publisher, Kafka consumer, email
+delivery worker, and outbox cleanup worker. A crash before publication leaves the outbox row pending, and a crash before
+provider delivery leaves the notification queued. A crash after Kafka accepts an event but before local completion can
+publish a duplicate Kafka event; a crash after the email provider accepts a message but before `Sent` is saved can send a
+duplicate email. Kafka deduplication and provider idempotency remain responsible for these at-least-once boundaries.
 
 An application publishing directly to Kafka must use an outbox in its own database when publication is coupled to its
 business transaction. This service cannot make another application's database mutation atomic with Kafka publication.
