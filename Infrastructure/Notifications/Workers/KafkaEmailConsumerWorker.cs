@@ -17,7 +17,7 @@ namespace Infrastructure.Notifications.Workers;
 
 public sealed class KafkaEmailConsumerWorker(IConsumer<string, string> consumer, IServiceScopeFactory scopes,
     IIntegrationEventSerializer serializer, INotificationDefaults defaults, IOptions<KafkaOptions> options,
-    IDateTime clock, NotificationMetrics metrics, ILogger<KafkaEmailConsumerWorker> logger) : BackgroundService
+    IDateTime clock, ILogger<KafkaEmailConsumerWorker> logger) : BackgroundService
 {
     protected override Task ExecuteAsync(CancellationToken stoppingToken) => Task.Run(() => Consume(stoppingToken), stoppingToken);
     private async Task Consume(CancellationToken ct)
@@ -81,13 +81,6 @@ public sealed class KafkaEmailConsumerWorker(IConsumer<string, string> consumer,
                 using var scope = scopes.CreateScope();
                 await scope.ServiceProvider.GetRequiredService<INotificationStore>().AcceptKafkaAsync(notification, inbox, invalidDlq, ct);
                 consumer.StoreOffset(item); consumer.Commit(item);
-                try
-                {
-                    var watermark = consumer.QueryWatermarkOffsets(item.TopicPartition, TimeSpan.FromSeconds(1));
-                    metrics.SetConsumerLag(watermark.High.Value - item.Offset.Value - 1);
-                }
-                catch (KafkaException) { }
-                if (notification is not null) NotificationTelemetry.Requested.Add(1);
             }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }

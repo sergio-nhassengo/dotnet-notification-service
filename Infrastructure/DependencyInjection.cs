@@ -78,8 +78,6 @@ public static class DependencyInjection
             services.AddHealthChecks().AddCheck<KafkaHealthCheck>("kafka", tags: ["ready"]);
         }
         services.AddHostedService<EmailDeliveryWorker>(); services.AddHostedService<OutboxCleanupWorker>();
-        services.AddSingleton<NotificationMetrics>(sp => new NotificationMetrics(sp.GetRequiredService<IServiceScopeFactory>(), sp.GetRequiredService<IDateTime>()).Register());
-        services.AddHostedService(sp => sp.GetRequiredService<NotificationMetrics>());
         services.AddHealthChecks().AddCheck<EmailProviderConfigurationHealthCheck>("email-provider", tags: ["ready"]);
 
         return services;

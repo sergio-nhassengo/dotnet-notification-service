@@ -17,7 +17,6 @@ public sealed class NotificationsController : BaseController
     {
         var result = await Mediator.Send(command, ct);
         if (result.IsFailure) return HandleResult(result);
-        NotificationTelemetry.Requested.Add(1);
         return AcceptedAtAction(nameof(Get), new { notificationId = result.Value.NotificationId }, result.Value);
     }
 

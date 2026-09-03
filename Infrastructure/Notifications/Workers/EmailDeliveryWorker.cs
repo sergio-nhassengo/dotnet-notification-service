@@ -43,8 +43,6 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
         using var scope = scopes.CreateScope(); var provider = scope.ServiceProvider.GetRequiredService<IEmailProvider>();
         var renderer = scope.ServiceProvider.GetRequiredService<IEmailTemplateRenderer>(); var store = scope.ServiceProvider.GetRequiredService<INotificationStore>();
         var started = clock.Now; var sw = Stopwatch.StartNew(); EmailProviderResult result;
-        using var activity = NotificationTelemetry.ActivitySource.StartActivity("email.deliver");
-        activity?.SetTag("notification.id", n.Id); activity?.SetTag("messaging.message.id", n.MessageId); activity?.SetTag("notification.template_id", n.TemplateId);
         try
         {
             var variables = JsonSerializer.Deserialize<Dictionary<string, string>>(n.TemplateVariables) ?? [];
@@ -54,7 +52,7 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
         }
         catch (TemplateException ex) { result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.Invalid", SafeError.Sanitize(ex.Message)); }
         catch (JsonException) { result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.VariablesMalformed", "Template variables are malformed."); }
-        sw.Stop(); NotificationTelemetry.ProviderDuration.Record(sw.Elapsed.TotalMilliseconds);
+        sw.Stop();
         var attempt = n.AttemptCount + 1; DateTimeOffset? next = null;
         if (!result.IsSuccess && retryPolicy.ShouldRetry(result.FailureCategory, attempt, deliveryOptions.Value.MaximumAttempts))
             next = retryPolicy.NextAttempt(clock.Now, attempt + 1, result.RetryAfter, Random.Shared.NextDouble() * .4 - .2);
@@ -79,8 +77,6 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
             };
         }
         await store.RecordDeliveryResultAsync(n.Id, provider.Name, started, result, clock.Now, next, dlq, ct);
-        if (result.IsSuccess) NotificationTelemetry.Sent.Add(1); else NotificationTelemetry.Failed.Add(1);
-        if (next is not null) NotificationTelemetry.Retried.Add(1); if (dlq is not null) NotificationTelemetry.DeadLettered.Add(1);
         logger.Log(result.IsSuccess ? LogLevel.Information : LogLevel.Warning,
             "Email delivery {Outcome}: NotificationId {NotificationId}, MessageId {MessageId}, CorrelationId {CorrelationId}, TemplateId {TemplateId}, Provider {Provider}, AttemptNumber {AttemptNumber}, Duration {DurationMs}ms",
             result.IsSuccess ? "sent" : result.FailureCategory.ToString(), n.Id, n.MessageId, n.CorrelationId, n.TemplateId, provider.Name, attempt, sw.Elapsed.TotalMilliseconds);
