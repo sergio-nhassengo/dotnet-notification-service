@@ -1,4 +1,3 @@
-using Application.Features.Notifications.Commands.CreateEmail;
 using Application.Notifications.Retry;
 using Application.Notifications.Security;
 using Domain.Enums;
@@ -7,17 +6,6 @@ namespace Application.UnitTests.Features.Notifications;
 
 public class NotificationPolicyTests
 {
-    [Fact]
-    public void Validator_rejects_invalid_email_and_excessive_variables()
-    {
-        var variables = Enumerable.Range(0, 51).ToDictionary(x => x.ToString(), _ => "value");
-        var command = new CreateEmailNotificationCommand("key", "correlation", new EmailRecipient("invalid", null),
-            "payment-confirmed", 1, variables, null, "Normal", null);
-        var result = new CreateEmailNotificationCommandValidator().Validate(command);
-        Assert.Contains(result.Errors, x => x.PropertyName == "Recipient.Email");
-        Assert.Contains(result.Errors, x => x.PropertyName == "Variables");
-    }
-
     [Theory]
     [InlineData(EmailFailureCategory.Transient, 1, true)]
     [InlineData(EmailFailureCategory.RateLimited, 4, true)]

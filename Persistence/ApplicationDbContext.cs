@@ -21,7 +21,7 @@ public class ApplicationDbContext(
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Role> Roles => Set<Role>();
-    
+
     public DbSet<EmailNotification> EmailNotifications => Set<EmailNotification>();
     public DbSet<DeliveryAttempt> DeliveryAttempts => Set<DeliveryAttempt>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
@@ -75,6 +75,8 @@ public class ApplicationDbContext(
 
         return base.SaveChanges();
     }
+
+    public void ClearTrackedChanges() => ChangeTracker.Clear();
 
     private void UpdateAuditableEntities()
     {

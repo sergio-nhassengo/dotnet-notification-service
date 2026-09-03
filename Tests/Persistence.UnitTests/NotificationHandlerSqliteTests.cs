@@ -1,4 +1,6 @@
 using Application.Common.Security;
+using Application.Features.Notifications.Commands.Delivery;
+using Application.Features.Notifications.Commands.Outbox;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.Data.Sqlite;
@@ -7,7 +9,7 @@ using NSubstitute;
 
 namespace Persistence.UnitTests;
 
-public sealed class NotificationStoreSqliteTests
+public sealed class NotificationHandlerSqliteTests
 {
     [Fact]
     public async Task ClaimOutboxAsync_filters_and_orders_DateTimeOffset_values_in_Sqlite()
@@ -28,8 +30,9 @@ public sealed class NotificationStoreSqliteTests
             CreateOutbox(now.AddMinutes(-1), now.AddMinutes(1)));
         await context.SaveChangesAsync();
 
-        var store = new NotificationStore(context);
-        var claimed = await store.ClaimOutboxAsync("test-worker", 10, now, TimeSpan.FromMinutes(1), CancellationToken.None);
+        var handler = new ClaimOutboxBatchCommandHandler(context, new ApplicationTransaction(context));
+        var claimed = await handler.Handle(new ClaimOutboxBatchCommand("test-worker", 10, now,
+            TimeSpan.FromMinutes(1)), CancellationToken.None);
 
         var message = Assert.Single(claimed);
         Assert.Equal(now.AddMinutes(-2), message.OccurredAt);
@@ -55,8 +58,9 @@ public sealed class NotificationStoreSqliteTests
         context.EmailNotifications.AddRange(due, future);
         await context.SaveChangesAsync();
 
-        var store = new NotificationStore(context);
-        var claimed = await store.ClaimDeliveriesAsync("test-worker", 10, now, TimeSpan.FromMinutes(1), CancellationToken.None);
+        var handler = new ClaimEmailDeliveryBatchCommandHandler(context, new ApplicationTransaction(context));
+        var claimed = await handler.Handle(new ClaimEmailDeliveryBatchCommand("test-worker", 10, now,
+            TimeSpan.FromMinutes(1)), CancellationToken.None);
 
         var notification = Assert.Single(claimed);
         Assert.Equal(due.Id, notification.Id);

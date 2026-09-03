@@ -18,4 +18,5 @@ public interface IApplicationDbContext
     DbSet<NotificationReplay> NotificationReplays { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+    void ClearTrackedChanges();
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Application.Common.Interfaces;
+using Application.Features.Notifications.Commands.Outbox;
 using Application.Notifications.Interfaces;
 using Application.Notifications.Models;
 using Application.Notifications.Security;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MediatR;
 
 namespace Infrastructure.Notifications.Workers;
 
@@ -28,22 +30,25 @@ public sealed class OutboxPublisherWorker(IServiceScopeFactory scopes, IKafkaPub
     private async Task PublishBatch(CancellationToken ct)
     {
         IReadOnlyList<Domain.Entities.OutboxMessage> rows;
-        using (var scope = scopes.CreateScope()) rows = await scope.ServiceProvider.GetRequiredService<INotificationStore>()
-            .ClaimOutboxAsync(_owner, options.Value.BatchSize, clock.Now, TimeSpan.FromMinutes(2), ct);
+        using (var scope = scopes.CreateScope()) rows = await scope.ServiceProvider.GetRequiredService<ISender>()
+            .Send(new ClaimOutboxBatchCommand(_owner, options.Value.BatchSize, clock.Now, TimeSpan.FromMinutes(2)), ct);
         foreach (var row in rows)
         {
             try
             {
                 var headers = JsonSerializer.Deserialize<Dictionary<string, string>>(row.Headers) ?? [];
                 await publisher.PublishAsync(new KafkaEnvelope(row.MessageKey, row.Topic, row.Payload, headers), ct);
-                using var scope = scopes.CreateScope(); await scope.ServiceProvider.GetRequiredService<INotificationStore>().MarkOutboxProcessedAsync(row.Id, clock.Now, ct);
+                using var scope = scopes.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<ISender>()
+                    .Send(new CompleteOutboxMessageCommand(row.Id, clock.Now), ct);
                 logger.LogInformation("Published outbox message {MessageId} to {KafkaTopic}", row.MessageKey, row.Topic);
             }
             catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 var seconds = Math.Min(300, Math.Pow(2, Math.Min(row.AttemptCount, 8))) * (0.8 + Random.Shared.NextDouble() * 0.4);
-                using var scope = scopes.CreateScope(); await scope.ServiceProvider.GetRequiredService<INotificationStore>()
-                    .MarkOutboxFailedAsync(row.Id, SafeError.Sanitize(ex.Message), clock.Now.AddSeconds(seconds), ct);
+                using var scope = scopes.CreateScope();
+                await scope.ServiceProvider.GetRequiredService<ISender>()
+                    .Send(new FailOutboxMessageCommand(row.Id, SafeError.Sanitize(ex.Message), clock.Now.AddSeconds(seconds)), ct);
                 logger.LogWarning("Outbox publish failed for {MessageId}; attempt {AttemptNumber}", row.MessageKey, row.AttemptCount + 1);
             }
         }

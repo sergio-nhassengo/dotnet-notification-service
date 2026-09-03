@@ -1,6 +1,7 @@
-using Application.Notifications.Interfaces;
+using Application.Common.Interfaces;
 using Domain.Common;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Notifications.Queries.GetEmailStatus;
 
@@ -13,15 +14,18 @@ public sealed record EmailNotificationStatusDto(Guid NotificationId, Guid Messag
     string? LastErrorCode, string? LastErrorMessage, IReadOnlyList<DeliveryAttemptDto> Attempts);
 public sealed record GetEmailStatusQuery(Guid NotificationId) : IRequest<Result<EmailNotificationStatusDto>>;
 
-public sealed class GetEmailStatusQueryHandler(INotificationStore store)
+public sealed class GetEmailStatusQueryHandler(IApplicationDbContext db)
     : IRequestHandler<GetEmailStatusQuery, Result<EmailNotificationStatusDto>>
 {
     public async Task<Result<EmailNotificationStatusDto>> Handle(GetEmailStatusQuery request, CancellationToken cancellationToken)
     {
-        var notification = await store.FindAsync(request.NotificationId, cancellationToken);
+        var notification = await db.EmailNotifications.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == request.NotificationId, cancellationToken);
         if (notification is null)
             return Result.Failure<EmailNotificationStatusDto>(Error.EntityNotFound("EmailNotification", request.NotificationId));
-        var attempts = await store.GetAttemptsAsync(request.NotificationId, cancellationToken);
+        var attempts = await db.DeliveryAttempts.AsNoTracking()
+            .Where(x => x.NotificationId == request.NotificationId)
+            .OrderBy(x => x.AttemptNumber).ToListAsync(cancellationToken);
         return new EmailNotificationStatusDto(notification.Id, notification.MessageId, notification.CorrelationId,
             notification.Status.ToString(), notification.AttemptCount, notification.RequestedAt,
             notification.ScheduledAt, notification.SentAt, notification.FailedAt, notification.ProviderMessageId,

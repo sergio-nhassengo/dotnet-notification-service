@@ -1,10 +1,11 @@
 using Application.Common.Interfaces;
-using Application.Notifications.Interfaces;
+using Application.Features.Notifications.Commands.Outbox;
 using Infrastructure.Notifications.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MediatR;
 
 namespace Infrastructure.Notifications.Workers;
 
@@ -18,8 +19,9 @@ public sealed class OutboxCleanupWorker(IServiceScopeFactory scopes, IOptions<Ou
         {
             try
             {
-                using var scope = scopes.CreateScope(); var count = await scope.ServiceProvider.GetRequiredService<INotificationStore>()
-                    .CleanupOutboxAsync(clock.Now.AddDays(-options.Value.ProcessedRetentionDays), ct);
+                using var scope = scopes.CreateScope();
+                var count = await scope.ServiceProvider.GetRequiredService<ISender>()
+                    .Send(new CleanupProcessedOutboxCommand(clock.Now.AddDays(-options.Value.ProcessedRetentionDays)), ct);
                 logger.LogInformation("Removed {OutboxCleanupCount} processed outbox records", count);
             }
             catch (Exception ex) when (!ct.IsCancellationRequested) { logger.LogError(ex, "Outbox cleanup failed"); }

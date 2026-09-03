@@ -1,11 +1,13 @@
 using System.Text.Json;
 using Application.Common.Interfaces;
+using Application.Common.Persistence;
 using Application.Notifications.Contracts;
 using Application.Notifications.Interfaces;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Notifications.Commands.CreateEmail;
 
@@ -17,7 +19,7 @@ public sealed record CreateEmailNotificationCommand(string IdempotencyKey, strin
 public sealed record EmailAcceptedResponse(Guid NotificationId, Guid MessageId, string Status);
 
 public sealed class CreateEmailNotificationCommandHandler(
-    INotificationStore store, IIntegrationEventSerializer serializer,
+    IApplicationDbContext db, IIntegrationEventSerializer serializer,
     INotificationDefaults defaults, IDateTime clock)
     : IRequestHandler<CreateEmailNotificationCommand, Result<EmailAcceptedResponse>>
 {
@@ -25,6 +27,11 @@ public sealed class CreateEmailNotificationCommandHandler(
     {
         if (!defaults.IsTemplateAllowed(request.TemplateId))
             return Result.Failure<EmailAcceptedResponse>(Error.Unauthorized("Notification.TemplateNotAllowed", "The template is not allowed for this caller."));
+
+        var existing = await db.EmailNotifications.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.IdempotencyKey == request.IdempotencyKey, cancellationToken);
+        if (existing is not null)
+            return new EmailAcceptedResponse(existing.Id, existing.MessageId, existing.Status.ToString());
 
         var now = clock.Now;
         var messageId = Guid.NewGuid();
@@ -57,7 +64,19 @@ public sealed class CreateEmailNotificationCommandHandler(
             CreatedAt = now
         };
 
-        var accepted = await store.AcceptRestAsync(notification, outbox, cancellationToken);
-        return new EmailAcceptedResponse(accepted.Id, accepted.MessageId, accepted.Status.ToString());
+        db.EmailNotifications.Add(notification);
+        db.OutboxMessages.Add(outbox);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            return new EmailAcceptedResponse(notification.Id, notification.MessageId, notification.Status.ToString());
+        }
+        catch (DbUpdateException exception) when (UniqueConstraintViolation.IsExpected(exception))
+        {
+            db.ClearTrackedChanges();
+            existing = await db.EmailNotifications.AsNoTracking()
+                .SingleAsync(x => x.IdempotencyKey == request.IdempotencyKey, cancellationToken);
+            return new EmailAcceptedResponse(existing.Id, existing.MessageId, existing.Status.ToString());
+        }
     }
 }

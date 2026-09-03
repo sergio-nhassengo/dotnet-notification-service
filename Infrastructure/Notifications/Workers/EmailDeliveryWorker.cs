@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Application.Common.Interfaces;
+using Application.Features.Notifications.Commands.Delivery;
 using Application.Notifications.Contracts;
 using Application.Notifications.Interfaces;
 using Application.Notifications.Models;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MediatR;
 
 namespace Infrastructure.Notifications.Workers;
 
@@ -34,24 +36,29 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
     private async Task ProcessBatch(CancellationToken ct)
     {
         IReadOnlyList<EmailNotification> rows;
-        using (var scope = scopes.CreateScope()) rows = await scope.ServiceProvider.GetRequiredService<INotificationStore>()
-            .ClaimDeliveriesAsync(_owner, deliveryOptions.Value.BatchSize, clock.Now, TimeSpan.FromMinutes(5), ct);
+        using (var scope = scopes.CreateScope()) rows = await scope.ServiceProvider.GetRequiredService<ISender>()
+            .Send(new ClaimEmailDeliveryBatchCommand(_owner, deliveryOptions.Value.BatchSize, clock.Now, TimeSpan.FromMinutes(5)), ct);
         await Parallel.ForEachAsync(rows, new ParallelOptions { MaxDegreeOfParallelism = deliveryOptions.Value.MaximumConcurrency, CancellationToken = ct }, ProcessOne);
     }
     private async ValueTask ProcessOne(EmailNotification n, CancellationToken ct)
     {
-        using var scope = scopes.CreateScope(); var provider = scope.ServiceProvider.GetRequiredService<IEmailProvider>();
-        var renderer = scope.ServiceProvider.GetRequiredService<IEmailTemplateRenderer>(); var store = scope.ServiceProvider.GetRequiredService<INotificationStore>();
+        string providerName;
         var started = clock.Now; var sw = Stopwatch.StartNew(); EmailProviderResult result;
-        try
+        using (var deliveryScope = scopes.CreateScope())
         {
-            var variables = JsonSerializer.Deserialize<Dictionary<string, string>>(n.TemplateVariables) ?? [];
-            var rendered = await renderer.RenderAsync(n.TemplateId, n.TemplateVersion, variables, ct);
-            result = await provider.SendAsync(new EmailMessage(n.MessageId, n.RecipientEmail, n.RecipientName,
-                n.SenderEmail, n.SenderName, n.ReplyTo, n.Subject ?? rendered.Subject, rendered.HtmlBody, rendered.TextBody), ct);
+            var provider = deliveryScope.ServiceProvider.GetRequiredService<IEmailProvider>();
+            var renderer = deliveryScope.ServiceProvider.GetRequiredService<IEmailTemplateRenderer>();
+            providerName = provider.Name;
+            try
+            {
+                var variables = JsonSerializer.Deserialize<Dictionary<string, string>>(n.TemplateVariables) ?? [];
+                var rendered = await renderer.RenderAsync(n.TemplateId, n.TemplateVersion, variables, ct);
+                result = await provider.SendAsync(new EmailMessage(n.MessageId, n.RecipientEmail, n.RecipientName,
+                    n.SenderEmail, n.SenderName, n.ReplyTo, n.Subject ?? rendered.Subject, rendered.HtmlBody, rendered.TextBody), ct);
+            }
+            catch (TemplateException ex) { result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.Invalid", SafeError.Sanitize(ex.Message)); }
+            catch (JsonException) { result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.VariablesMalformed", "Template variables are malformed."); }
         }
-        catch (TemplateException ex) { result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.Invalid", SafeError.Sanitize(ex.Message)); }
-        catch (JsonException) { result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.VariablesMalformed", "Template variables are malformed."); }
         sw.Stop();
         var attempt = n.AttemptCount + 1; DateTimeOffset? next = null;
         if (!result.IsSuccess && retryPolicy.ShouldRetry(result.FailureCategory, attempt, deliveryOptions.Value.MaximumAttempts))
@@ -76,12 +83,14 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
                 CreatedAt = clock.Now
             };
         }
-        await store.RecordDeliveryResultAsync(n.Id, provider.Name, started, result, clock.Now, next, dlq, ct);
+        using (var resultScope = scopes.CreateScope())
+            await resultScope.ServiceProvider.GetRequiredService<ISender>()
+                .Send(new RecordEmailDeliveryResultCommand(n.Id, providerName, started, result, clock.Now, next, dlq), ct);
         logger.Log(result.IsSuccess ? LogLevel.Information : LogLevel.Warning,
             "Email delivery {Outcome}: NotificationId {NotificationId}, MessageId {MessageId}, CorrelationId {CorrelationId}, TemplateId {TemplateId}, Provider {Provider}, AttemptNumber {AttemptNumber}, Duration {DurationMs}ms",
-            result.IsSuccess ? "sent" : result.FailureCategory.ToString(), n.Id, n.MessageId, n.CorrelationId, n.TemplateId, provider.Name, attempt, sw.Elapsed.TotalMilliseconds);
+            result.IsSuccess ? "sent" : result.FailureCategory.ToString(), n.Id, n.MessageId, n.CorrelationId, n.TemplateId, providerName, attempt, sw.Elapsed.TotalMilliseconds);
         if (result.FailureCategory == EmailFailureCategory.Configuration)
             logger.LogCritical("Email provider configuration failure: NotificationId {NotificationId}, MessageId {MessageId}, Provider {Provider}, ErrorCode {ErrorCode}",
-                n.Id, n.MessageId, provider.Name, result.ErrorCode);
+                n.Id, n.MessageId, providerName, result.ErrorCode);
     }
 }

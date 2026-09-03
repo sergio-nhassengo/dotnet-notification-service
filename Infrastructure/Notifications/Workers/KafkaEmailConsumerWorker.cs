@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Application.Common.Interfaces;
+using Application.Features.Notifications.Commands.AcceptKafkaEmail;
 using Application.Notifications.Contracts;
 using Application.Notifications.Interfaces;
 using Application.Notifications.Security;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MediatR;
 
 namespace Infrastructure.Notifications.Workers;
 
@@ -79,7 +81,8 @@ public sealed class KafkaEmailConsumerWorker(IConsumer<string, string> consumer,
                         messageId, item.Topic, item.Partition.Value, item.Offset.Value, "Kafka.InvalidContract");
                 }
                 using var scope = scopes.CreateScope();
-                await scope.ServiceProvider.GetRequiredService<INotificationStore>().AcceptKafkaAsync(notification, inbox, invalidDlq, ct);
+                await scope.ServiceProvider.GetRequiredService<ISender>()
+                    .Send(new AcceptKafkaEmailCommand(notification, inbox, invalidDlq), ct);
                 consumer.StoreOffset(item); consumer.Commit(item);
             }
         }

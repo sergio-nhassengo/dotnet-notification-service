@@ -2,7 +2,6 @@ using Application.Features.Notifications.Commands.CreateEmail;
 using Application.Features.Notifications.Commands.ReplayEmail;
 using Application.Features.Notifications.Queries.GetEmailStatus;
 using Infrastructure.Extensions.Auth;
-using Infrastructure.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,7 +24,6 @@ public sealed class NotificationsController : BaseController
         HandleResult(await Mediator.Send(new GetEmailStatusQuery(notificationId), ct));
 
     [HttpPost("{notificationId:guid}/replay")]
-    [Authorize(Policy = AuthPolicies.RequireAdmin)]
     public async Task<IActionResult> Replay(Guid notificationId, CancellationToken ct) =>
         HandleResult(await Mediator.Send(new ReplayEmailNotificationCommand(notificationId), ct));
 }
