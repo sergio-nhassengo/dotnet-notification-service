@@ -17,15 +17,12 @@ public sealed class KafkaOptions
 public sealed class OutboxOptions
 {
     public const string SectionName = "Outbox";
-    [Range(1, 1000)] public int BatchSize { get; set; } = 100;
     [Range(1, 300)] public int PollingIntervalSeconds { get; set; } = 2;
     [Range(1, 365)] public int ProcessedRetentionDays { get; set; } = 7;
 }
 public sealed class EmailDeliveryOptions
 {
     public const string SectionName = "EmailDelivery";
-    [Range(1, 1000)] public int BatchSize { get; set; } = 50;
-    [Range(1, 100)] public int MaximumConcurrency { get; set; } = 10;
     [Range(1, 20)] public int MaximumAttempts { get; set; } = 5;
     [Range(1, 300)] public int PollingIntervalSeconds { get; set; } = 2;
 }

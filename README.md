@@ -70,11 +70,13 @@ exceptions, credentials, message bodies, and template variables are never return
 ### Reliability model
 
 - REST acceptance commits the notification and `EmailRequestedV1` outbox row atomically. The single outbox worker reads
-  bounded pending batches, publishes with Kafka `acks=all` and idempotent production, then acknowledges each row.
+  and publishes one due row at a time with Kafka `acks=all` and idempotent production, then acknowledges it and
+  immediately checks for the next row.
 - Direct Kafka input converges on the same notification/delivery tables. `notification-service-email-v1` disables auto
   commit/store and commits only after a unique inbox row and delivery state are durable. Invalid/unsupported contracts
   are safely described and sent to the DLQ through an outbox row.
-- The single delivery worker reads due notifications and awaits its bounded parallel batch before polling again. The
+- The single delivery worker sequentially reads and delivers one due notification at a time, immediately continuing
+  while work exists and waiting for the polling interval only when idle. The
   default schedule is immediate, approximately 1, 5, and 15 minutes,
   then 1 hour, with ±20% jitter. Timeouts, network errors, 408, 429, and 5xx are transient. Invalid content and recipients
   are permanent. Provider 401/403 responses are configuration failures and are not aggressively retried.

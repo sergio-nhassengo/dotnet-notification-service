@@ -25,22 +25,33 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(deliveryOptions.Value.PollingIntervalSeconds));
-        do
+        var idleDelay = TimeSpan.FromSeconds(deliveryOptions.Value.PollingIntervalSeconds);
+        while (!stoppingToken.IsCancellationRequested)
         {
-            try { await ProcessBatch(stoppingToken); }
+            try
+            {
+                var found = await ProcessNext(stoppingToken);
+                if (!found) await Task.Delay(idleDelay, stoppingToken);
+            }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
-            catch (Exception ex) { logger.LogError(ex, "Email delivery worker cycle failed"); }
-        } while (await timer.WaitForNextTickAsync(stoppingToken));
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Email delivery worker cycle failed");
+                try { await Task.Delay(idleDelay, stoppingToken); }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
+            }
+        }
     }
-    private async Task ProcessBatch(CancellationToken ct)
+    private async Task<bool> ProcessNext(CancellationToken ct)
     {
-        IReadOnlyList<EmailNotification> rows;
-        using (var scope = scopes.CreateScope()) rows = await scope.ServiceProvider.GetRequiredService<ISender>()
-            .Send(new GetDueEmailDeliveryBatchQuery(deliveryOptions.Value.BatchSize, clock.Now), ct);
-        await Parallel.ForEachAsync(rows, new ParallelOptions { MaxDegreeOfParallelism = deliveryOptions.Value.MaximumConcurrency, CancellationToken = ct }, ProcessOne);
+        EmailNotification? notification;
+        using (var scope = scopes.CreateScope()) notification = await scope.ServiceProvider.GetRequiredService<ISender>()
+            .Send(new GetNextDueEmailDeliveryQuery(clock.Now), ct);
+        if (notification is null) return false;
+        await DeliverNotification(notification, ct);
+        return true;
     }
-    private async ValueTask ProcessOne(EmailNotification n, CancellationToken ct)
+    private async Task DeliverNotification(EmailNotification n, CancellationToken ct)
     {
         string providerName;
         var started = clock.Now; var sw = Stopwatch.StartNew(); EmailProviderResult result;

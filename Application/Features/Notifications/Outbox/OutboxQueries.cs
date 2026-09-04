@@ -5,21 +5,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Notifications.Queries.Outbox;
 
-public sealed record GetPendingOutboxBatchQuery(int BatchSize, DateTimeOffset Now)
-    : IRequest<IReadOnlyList<OutboxMessage>>;
+public sealed record GetNextPendingOutboxMessageQuery(DateTimeOffset Now)
+    : IRequest<OutboxMessage?>;
 
-public sealed class GetPendingOutboxBatchQueryHandler(IApplicationDbContext db)
-    : IRequestHandler<GetPendingOutboxBatchQuery, IReadOnlyList<OutboxMessage>>
+public sealed class GetNextPendingOutboxMessageQueryHandler(IApplicationDbContext db)
+    : IRequestHandler<GetNextPendingOutboxMessageQuery, OutboxMessage?>
 {
-    public async Task<IReadOnlyList<OutboxMessage>> Handle(
-        GetPendingOutboxBatchQuery request,
+    public Task<OutboxMessage?> Handle(
+        GetNextPendingOutboxMessageQuery request,
         CancellationToken cancellationToken)
     {
-        return await db.OutboxMessages
+        return db.OutboxMessages
             .AsNoTracking()
             .Where(x => x.ProcessedAt == null && x.NextAttemptAt <= request.Now)
             .OrderBy(x => x.OccurredAt)
-            .Take(request.BatchSize)
-            .ToListAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }
