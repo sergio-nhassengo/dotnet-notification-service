@@ -1,0 +1,23 @@
+{
+  "id": "tan-trips-history-report",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "TAN trips history for customs",
+  "minimumAttachments": 1,
+  "source": "weighbridge-tan-webservice/API/Workers/SendTANTripsHistoryToCustomsJob.cs",
+  "variables": {
+    "reportPeriod": {
+      "description": "Reporting period",
+      "example": "01–09 Sep 2026"
+    },
+    "generatedAt": {
+      "description": "Generated at",
+      "example": "09 Sep 2026 10:00 CAT"
+    },
+    "summary": {
+      "description": "Summary",
+      "example": "Completed trips for the reporting period."
+    }
+  }
+}

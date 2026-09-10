@@ -1,3 +1,4 @@
+using Application.Notifications.Integration;
 using Application.Common.Interfaces;
 using Domain.Common;
 using MediatR;
@@ -11,17 +12,22 @@ public sealed record DeliveryAttemptDto(int AttemptNumber, string Provider, Date
 public sealed record EmailNotificationStatusDto(Guid NotificationId, Guid MessageId, string CorrelationId,
     string Status, int AttemptCount, DateTimeOffset RequestedAt, DateTimeOffset? ScheduledAt,
     DateTimeOffset? SentAt, DateTimeOffset? FailedAt, string? ProviderMessageId,
-    string? LastErrorCode, string? LastErrorMessage, IReadOnlyList<DeliveryAttemptDto> Attempts);
+    string? LastErrorCode, string? LastErrorMessage, IReadOnlyList<DeliveryAttemptDto> Attempts)
+{
+    public string ApplicationId { get; init; } = "legacy";
+    public string? BusinessReference { get; init; }
+    public string DeliveryMeaning { get; init; } = "Sent means accepted by the configured provider, not confirmed inbox delivery.";
+}
 public sealed record GetEmailStatusQuery(Guid NotificationId) : IRequest<Result<EmailNotificationStatusDto>>;
 
-public sealed class GetEmailStatusQueryHandler(IApplicationDbContext db)
+public sealed class GetEmailStatusQueryHandler(IApplicationDbContext db, INotificationCaller caller, INotificationApplications applications)
     : IRequestHandler<GetEmailStatusQuery, Result<EmailNotificationStatusDto>>
 {
     public async Task<Result<EmailNotificationStatusDto>> Handle(GetEmailStatusQuery request, CancellationToken cancellationToken)
     {
         var notification = await db.EmailNotifications.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == request.NotificationId, cancellationToken);
-        if (notification is null)
+            .SingleOrDefaultAsync(x => x.Id == request.NotificationId && (caller.IsAdmin || x.ApplicationId == caller.ApplicationId), cancellationToken);
+        if (notification is null || !caller.IsAdmin && applications.Find(caller.ApplicationId) is null)
             return Result.Failure<EmailNotificationStatusDto>(Error.EntityNotFound("EmailNotification", request.NotificationId));
         var attempts = await db.DeliveryAttempts.AsNoTracking()
             .Where(x => x.NotificationId == request.NotificationId)
@@ -32,6 +38,6 @@ public sealed class GetEmailStatusQueryHandler(IApplicationDbContext db)
             notification.LastErrorCode, notification.LastErrorMessage,
             attempts.Select(x => new DeliveryAttemptDto(x.AttemptNumber, x.Provider, x.StartedAt, x.CompletedAt,
                 x.Outcome.ToString(), x.ProviderStatusCode, x.ProviderMessageId, x.ErrorCode,
-                x.SafeErrorMessage, x.NextAttemptAt)).ToArray());
+                x.SafeErrorMessage, x.NextAttemptAt)).ToArray()) { ApplicationId = notification.ApplicationId, BusinessReference = notification.BusinessReference };
     }
 }

@@ -1,0 +1,10 @@
+Vessel shift bulletin
+
+Please find attached the vessel bulletin for the shift below.
+
+Vessel: {{vesselName}}
+Work order: {{workOrderId}}
+Shift: {{shiftNumber}}
+Shift date: {{shiftDate}}
+
+Complaints or requests for clarification regarding reported delays must be submitted within 24 hours of receiving this notification.

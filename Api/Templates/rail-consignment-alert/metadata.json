@@ -1,0 +1,24 @@
+{
+  "id": "rail-consignment-alert",
+  "applications": [
+    "weighbridge-api",
+    "tan-webservice"
+  ],
+  "title": "Rail consignment alert",
+  "minimumAttachments": 0,
+  "source": "weighbridge-web-api/WeighBridgeWeAPI/Application/RAN/RailConsignments/NotifyAgent.cs; weighbridge-tan-webservice/Application/RAN/RailConsignments/ReceiveRailConsignment.cs",
+  "variables": {
+    "consignmentNumber": {
+      "description": "Consignment",
+      "example": "CON-301"
+    },
+    "message": {
+      "description": "Update",
+      "example": "Wagons are ready for review."
+    },
+    "requestedBy": {
+      "description": "Requested by",
+      "example": "Example Operator"
+    }
+  }
+}

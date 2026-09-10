@@ -16,6 +16,11 @@ public class LoggingBehaviour<TRequest, TResponse>(
 {
     public Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
+        if (typeof(TRequest).Namespace?.Contains(".Features.Notifications.", StringComparison.Ordinal) == true)
+        {
+            logger.LogInformation("Handling {RequestName} for user {UserId}", typeof(TRequest).Name, currentUserService.UserId ?? "anonymous");
+            return next();
+        }
         logger.LogInformation(
             "Handling {RequestName} for user {UserId}: {@Request}",
             typeof(TRequest).Name,

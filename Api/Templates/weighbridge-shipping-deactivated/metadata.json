@@ -1,0 +1,35 @@
+{
+  "id": "weighbridge-shipping-deactivated",
+  "applications": [
+    "weighbridge-api"
+  ],
+  "title": "Shipping sequence deactivated",
+  "minimumAttachments": 0,
+  "source": "weighbridge-web-api/WeighBridgeWeAPI/Application/ShippingOrders/ActivateShippingOrderDetail.cs",
+  "variables": {
+    "shippingOrderId": {
+      "description": "Shipping order",
+      "example": "SO-104"
+    },
+    "commodity": {
+      "description": "Commodity",
+      "example": "Coal"
+    },
+    "customerName": {
+      "description": "Customer",
+      "example": "Example Cargo"
+    },
+    "parcelNumber": {
+      "description": "Parcel",
+      "example": "PAR-102"
+    },
+    "hatch": {
+      "description": "Hatch",
+      "example": "Hatch 2"
+    },
+    "position": {
+      "description": "Position",
+      "example": "1"
+    }
+  }
+}

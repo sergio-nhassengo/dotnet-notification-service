@@ -18,7 +18,9 @@ public class UnhandledExceptionBehaviour<TRequest, TResponse>(ILogger<UnhandledE
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unhandled exception for request {RequestName} {@Request}", typeof(TRequest).Name, request);
+            if (typeof(TRequest).Namespace?.Contains(".Features.Notifications.", StringComparison.Ordinal) == true)
+                logger.LogError(ex, "Unhandled exception for request {RequestName}", typeof(TRequest).Name);
+            else logger.LogError(ex, "Unhandled exception for request {RequestName} {@Request}", typeof(TRequest).Name, request);
             throw;
         }
     }

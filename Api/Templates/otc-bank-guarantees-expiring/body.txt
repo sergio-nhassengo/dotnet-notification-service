@@ -1,0 +1,9 @@
+Bank guarantees approaching expiry
+
+Please find attached the report of bank guarantees approaching expiry.
+
+Expiry window (days): {{expiryWindowDays}}
+Report date: {{reportDate}}
+Report summary: {{summary}}
+
+Review the attached report and follow up on the affected guarantees.

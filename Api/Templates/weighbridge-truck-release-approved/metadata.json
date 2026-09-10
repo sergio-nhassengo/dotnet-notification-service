@@ -1,0 +1,71 @@
+{
+  "id": "weighbridge-truck-release-approved",
+  "applications": [
+    "weighbridge-api"
+  ],
+  "title": "Truck release approved",
+  "minimumAttachments": 0,
+  "source": "weighbridge-web-api/WeighBridgeWeAPI/Application/ReceiptTransactions/Commands/ApproveReleasedTransaction.cs",
+  "variables": {
+    "registrationNumber": {
+      "description": "Truck",
+      "example": "AAA-123-MP"
+    },
+    "tanId": {
+      "description": "TAN",
+      "example": "TAN-1204"
+    },
+    "orderNumber": {
+      "description": "Order",
+      "example": "ORD-204"
+    },
+    "trailer1": {
+      "description": "Trailer 1",
+      "example": "TRL-101"
+    },
+    "trailer2": {
+      "description": "Trailer 2",
+      "example": "Not applicable"
+    },
+    "customerName": {
+      "description": "Customer",
+      "example": "Example Cargo"
+    },
+    "commodity": {
+      "description": "Commodity",
+      "example": "Coal"
+    },
+    "destination": {
+      "description": "Destination / slab",
+      "example": "Terminal 1"
+    },
+    "mineTicketNumber": {
+      "description": "Mine ticket",
+      "example": "MT-204"
+    },
+    "mineGrossMass": {
+      "description": "Mine gross mass (kg)",
+      "example": "48,000"
+    },
+    "grossMass": {
+      "description": "First mass (kg)",
+      "example": "47,800"
+    },
+    "onHoldAt": {
+      "description": "On hold since",
+      "example": "09 Sep 2026 10:00 CAT"
+    },
+    "reason": {
+      "description": "Original hold reason",
+      "example": "Weight discrepancy requires review."
+    },
+    "agentComment": {
+      "description": "Agent comment",
+      "example": "Supporting documents have been provided."
+    },
+    "supervisorComment": {
+      "description": "Operations supervisor comment",
+      "example": "Review completed; see the recorded decision."
+    }
+  }
+}

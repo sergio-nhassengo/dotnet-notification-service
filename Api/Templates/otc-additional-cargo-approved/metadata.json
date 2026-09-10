@@ -1,0 +1,31 @@
+{
+  "id": "otc-additional-cargo-approved",
+  "applications": [
+    "otc-api"
+  ],
+  "title": "Additional cargo approved",
+  "minimumAttachments": 0,
+  "source": "otc-api/Application/Weighbridge/AdditionalCargo",
+  "variables": {
+    "requestId": {
+      "description": "Request",
+      "example": "AC-102"
+    },
+    "vesselName": {
+      "description": "Vessel",
+      "example": "MV Example"
+    },
+    "workOrderId": {
+      "description": "Work order",
+      "example": "WO-1204"
+    },
+    "agentName": {
+      "description": "Agent",
+      "example": "Example Agent"
+    },
+    "quantityKg": {
+      "description": "Quantity to add (kg)",
+      "example": "25,000"
+    }
+  }
+}

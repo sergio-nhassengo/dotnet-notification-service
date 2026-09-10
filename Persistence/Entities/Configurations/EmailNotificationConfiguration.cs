@@ -16,7 +16,11 @@ public sealed class EmailNotificationConfiguration : IEntityTypeConfiguration<Em
         b.Property(x => x.TemplateVariables).HasMaxLength(20000).IsRequired(); b.Property(x => x.Subject).HasMaxLength(200);
         b.Property(x => x.ProviderMessageId).HasMaxLength(500); b.Property(x => x.LastErrorCode).HasMaxLength(100);
         b.Property(x => x.LastErrorMessage).HasMaxLength(500); b.Property(x => x.OriginalTopic).HasMaxLength(249);
-        b.HasIndex(x => x.IdempotencyKey).IsUnique(); b.HasIndex(x => x.MessageId).IsUnique(); b.HasIndex(x => x.CorrelationId);
+        b.Property(x => x.ApplicationId).HasMaxLength(100).HasDefaultValue("legacy").IsRequired();
+        b.Property(x => x.BusinessReference).HasMaxLength(200);
+        b.Property(x => x.RequestHash).HasMaxLength(64);
+        b.HasIndex(x => new { x.ApplicationId, x.IdempotencyKey }).IsUnique();
+        b.HasIndex(x => new { x.ApplicationId, x.BusinessReference }); b.HasIndex(x => x.MessageId).IsUnique(); b.HasIndex(x => x.CorrelationId);
         b.HasIndex(x => new { x.Status, x.NextAttemptAt });
         b.HasMany(x => x.DeliveryAttempts).WithOne(x => x.Notification).HasForeignKey(x => x.NotificationId).OnDelete(DeleteBehavior.Cascade);
     }
@@ -61,5 +65,18 @@ public sealed class NotificationReplayConfiguration : IEntityTypeConfiguration<N
         b.ToTable("NotificationReplays"); b.HasKey(x => x.Id); b.Property(x => x.RequestedBy).HasMaxLength(200).IsRequired();
         b.HasIndex(x => new { x.NotificationId, x.RequestedAt });
         b.HasOne(x => x.Notification).WithMany().HasForeignKey(x => x.NotificationId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public sealed class NotificationAttachmentConfiguration : IEntityTypeConfiguration<NotificationAttachment>
+{
+    public void Configure(EntityTypeBuilder<NotificationAttachment> b)
+    {
+        b.ToTable("NotificationAttachments"); b.HasKey(x => x.Id);
+        b.Property(x => x.ApplicationId).HasMaxLength(100).IsRequired();
+        b.Property(x => x.FileName).HasMaxLength(200).IsRequired();
+        b.Property(x => x.ContentType).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Content).IsRequired();
+        b.HasIndex(x => new { x.ApplicationId, x.CreatedAt });
     }
 }

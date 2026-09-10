@@ -1,0 +1,33 @@
+{
+  "id": "weighbridge-transactions-report",
+  "applications": [
+    "otc-api",
+    "weighbridge-api",
+    "tan-webservice"
+  ],
+  "title": "Weighbridge transactions report",
+  "minimumAttachments": 1,
+  "source": "weighbridge-tan-webservice/API/Workers/SendTicketToAgentsAndCustomersJob.cs",
+  "variables": {
+    "orderNumber": {
+      "description": "Order",
+      "example": "ORD-204"
+    },
+    "customerName": {
+      "description": "Customer",
+      "example": "Example Cargo"
+    },
+    "destination": {
+      "description": "Destination",
+      "example": "Terminal 1"
+    },
+    "reportPeriod": {
+      "description": "Reporting period",
+      "example": "01–09 Sep 2026"
+    },
+    "generatedAt": {
+      "description": "Generated at",
+      "example": "09 Sep 2026 10:00 CAT"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+TIP payment failed
+
+The bank reported that the TIP payment failed.
+
+Truck: {{registrationNumber}}
+TAN: {{tanId}}
+Order: {{orderNumber}}
+Transporter: {{transporterName}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+Mine ticket: {{mineTicketNumber}}
+Cargo owner: {{customerName}}
+Declaration: {{declarationNumber}}
+Payment reference: {{paymentReference}}
+Amount: {{amount}}
+Currency: {{currency}}
+Bank failure reason: {{reason}}
+
+Review the failure reason and payment record before arranging another payment attempt.

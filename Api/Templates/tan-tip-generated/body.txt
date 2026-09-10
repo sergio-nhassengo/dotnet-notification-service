@@ -1,0 +1,15 @@
+TIP generated
+
+The truck details have been sent to customs and a TIP has been generated.
+
+Truck: {{registrationNumber}}
+TAN: {{tanId}}
+Order: {{orderNumber}}
+Transporter: {{transporterName}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+Mine ticket: {{mineTicketNumber}}
+Cargo owner: {{customerName}}
+Declaration: {{declarationNumber}}
+
+Review the declaration and any payment requirements in TAN. TIP generation alone does not confirm payment.

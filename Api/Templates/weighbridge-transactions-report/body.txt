@@ -1,0 +1,11 @@
+Weighbridge transactions report
+
+Please find attached the weighbridge transactions report.
+
+Order: {{orderNumber}}
+Customer: {{customerName}}
+Destination: {{destination}}
+Reporting period: {{reportPeriod}}
+Generated at: {{generatedAt}}
+
+Review the attached transactions for the stated reporting period.

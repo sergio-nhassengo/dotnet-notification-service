@@ -1,0 +1,31 @@
+{
+  "id": "weighbridge-equipment-approval-requested",
+  "applications": [
+    "weighbridge-api"
+  ],
+  "title": "Equipment operation approval required",
+  "minimumAttachments": 0,
+  "source": "weighbridge-web-api/WeighBridgeWeAPI/Application/EquipmentOperations/EquipmentOperationDetails/SubmitEquipmentOperationDetailsToApproval.cs",
+  "variables": {
+    "operationId": {
+      "description": "Operation",
+      "example": "EO-101"
+    },
+    "vesselName": {
+      "description": "Vessel",
+      "example": "MV Example"
+    },
+    "workOrderId": {
+      "description": "Work order",
+      "example": "WO-1204"
+    },
+    "submittedBy": {
+      "description": "Submitted by",
+      "example": "Example Operator"
+    },
+    "summary": {
+      "description": "Operation details",
+      "example": "Review equipment allocations and operating time."
+    }
+  }
+}

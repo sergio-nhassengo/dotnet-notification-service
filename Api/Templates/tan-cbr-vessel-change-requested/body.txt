@@ -1,0 +1,15 @@
+CBR vessel change requested
+
+A vessel change has been requested for the cargo booking below.
+
+Cargo booking request: {{cbrId}}
+Customer: {{customerName}}
+Agent: {{agentName}}
+Current vessel: {{currentVesselName}}
+Requested vessel: {{requestedVesselName}}
+Commodity: {{commodity}}
+Parcel: {{parcelNumber}}
+Submitted by: {{submittedBy}}
+Submitted at: {{submittedAt}}
+
+Review the cargo booking and the requested vessel change before making a decision.

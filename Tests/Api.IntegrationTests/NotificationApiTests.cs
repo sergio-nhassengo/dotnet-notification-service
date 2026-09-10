@@ -22,10 +22,8 @@ public class NotificationApiTests(ApiWebApplicationFactory factory) : IClassFixt
             correlationId = key,
             recipient = new { email = "customer@example.com", name = "Customer" },
             templateId = "payment-confirmed",
-            templateVersion = 1,
             variables = new Dictionary<string, string> { { "customerName", "Customer" }, { "paymentReference", "PAY-123" } },
             subject = (string?)null,
-            priority = "Normal",
             scheduledAt = (DateTimeOffset?)null
         };
         var first = await client.PostAsJsonAsync("/api/v1/notifications/email", request);

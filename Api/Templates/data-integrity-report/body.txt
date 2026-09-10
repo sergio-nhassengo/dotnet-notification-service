@@ -1,0 +1,10 @@
+Data integrity report
+
+Please find attached the data integrity report.
+
+Scope: {{scope}}
+Reporting period: {{reportPeriod}}
+Issues found: {{issueCount}}
+Summary: {{summary}}
+
+Review the report and reconcile the affected records in the originating application.

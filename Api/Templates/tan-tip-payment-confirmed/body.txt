@@ -1,0 +1,18 @@
+TIP payment confirmed
+
+The TIP payment has been confirmed by the bank.
+
+Truck: {{registrationNumber}}
+TAN: {{tanId}}
+Order: {{orderNumber}}
+Transporter: {{transporterName}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+Mine ticket: {{mineTicketNumber}}
+Cargo owner: {{customerName}}
+Declaration: {{declarationNumber}}
+Payment reference: {{paymentReference}}
+Amount: {{amount}}
+Currency: {{currency}}
+
+Review the updated declaration and payment record in TAN.

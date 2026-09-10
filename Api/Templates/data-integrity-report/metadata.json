@@ -1,0 +1,29 @@
+{
+  "id": "data-integrity-report",
+  "applications": [
+    "otc-api",
+    "weighbridge-api",
+    "tan-webservice"
+  ],
+  "title": "Data integrity report",
+  "minimumAttachments": 1,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/DataIntegrityService.cs; weighbridge-web-api/WeighBridgeWeAPI/Application/RAN/WagonsRequest/UpdateWagonsRequestShuntingData.cs",
+  "variables": {
+    "scope": {
+      "description": "Scope",
+      "example": "Rail orders"
+    },
+    "reportPeriod": {
+      "description": "Reporting period",
+      "example": "09 Sep 2026"
+    },
+    "issueCount": {
+      "description": "Issues found",
+      "example": "3"
+    },
+    "summary": {
+      "description": "Summary",
+      "example": "Review the affected records listed in the report."
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "tan-sew-integration-failed",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "SEW integration failure",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/API/Workers/SewSFTP",
+  "variables": {
+    "operation": {
+      "description": "Operation",
+      "example": "Declaration upload"
+    },
+    "reference": {
+      "description": "Business / file reference",
+      "example": "TAN-1204"
+    },
+    "occurredAt": {
+      "description": "Occurred at",
+      "example": "09 Sep 2026 10:00 CAT"
+    },
+    "errorCode": {
+      "description": "Error code",
+      "example": "SEW-UPLOAD-FAILED"
+    },
+    "errorSummary": {
+      "description": "Error summary",
+      "example": "The remote service could not be reached."
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "vessel-bulletin-report",
+  "applications": [
+    "otc-api",
+    "weighbridge-api"
+  ],
+  "title": "Vessel shift bulletin",
+  "minimumAttachments": 1,
+  "source": "otc-api/Infrastructure/Services/SSRSReportService.cs; weighbridge-web-api/WeighBridgeWeAPI/Infrastructure/Services/SSRSReportService.cs",
+  "variables": {
+    "vesselName": {
+      "description": "Vessel",
+      "example": "MV Example"
+    },
+    "workOrderId": {
+      "description": "Work order",
+      "example": "WO-1204"
+    },
+    "shiftNumber": {
+      "description": "Shift",
+      "example": "2"
+    },
+    "shiftDate": {
+      "description": "Shift date",
+      "example": "09 Sep 2026"
+    }
+  }
+}

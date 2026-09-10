@@ -1,0 +1,19 @@
+TIP payment submitted
+
+The payment reference has been submitted to the bank for payment.
+
+Truck: {{registrationNumber}}
+TAN: {{tanId}}
+Order: {{orderNumber}}
+Transporter: {{transporterName}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+Mine ticket: {{mineTicketNumber}}
+Cargo owner: {{customerName}}
+Declaration: {{declarationNumber}}
+Payment reference: {{paymentReference}}
+Amount: {{amount}}
+Currency: {{currency}}
+Bank: {{bankName}}
+
+Await the payment outcome. Submission alone does not confirm payment.

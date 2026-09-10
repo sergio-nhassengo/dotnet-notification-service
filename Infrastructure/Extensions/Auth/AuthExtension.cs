@@ -1,3 +1,5 @@
+using Infrastructure.Notifications.Integration;
+using Microsoft.AspNetCore.Authentication;
 using System;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,13 +15,19 @@ public static class AuthExtension
     public static IServiceCollection AddInfraAuth(this IServiceCollection services, IConfiguration configuration)
     {
         var jwtSection = configuration.GetSection("Jwt");
-        var signingKey = jwtSection["SigningKey"]
-            ?? throw new InvalidOperationException("Jwt:SigningKey is not configured.");
-
         services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddAuthentication("NotificationOrJwt")
+            .AddPolicyScheme("NotificationOrJwt", "Notification API key or JWT", options =>
+            {
+                options.ForwardDefaultSelector = context => context.Request.Headers.Authorization.ToString()
+                    .StartsWith("ApiKey ", StringComparison.OrdinalIgnoreCase)
+                    ? NotificationApiKeyHandler.SchemeName : JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddScheme<AuthenticationSchemeOptions, NotificationApiKeyHandler>(NotificationApiKeyHandler.SchemeName, _ => { })
             .AddJwtBearer(options =>
             {
+                var signingKey = jwtSection["SigningKey"]
+                    ?? throw new InvalidOperationException("Jwt:SigningKey is not configured.");
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -34,6 +42,12 @@ public static class AuthExtension
             });
 
         services.AddAuthorizationBuilder()
+            .AddPolicy("NotificationSend", policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+                context.User.IsInRole("Admin") || context.User.HasClaim("notification_permission", "send") ||
+                !context.User.HasClaim(c => c.Type == "application_id")))
+            .AddPolicy("NotificationRead", policy => policy.RequireAuthenticatedUser().RequireAssertion(context =>
+                context.User.IsInRole("Admin") || context.User.HasClaim("notification_permission", "read") ||
+                !context.User.HasClaim(c => c.Type == "application_id")))
             .AddPolicy(AuthPolicies.RequireAdmin, policy => policy.RequireRole("Admin"));
 
         services.AddAuthorization(options =>

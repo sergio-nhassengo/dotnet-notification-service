@@ -6,8 +6,8 @@ namespace Domain.UnitTests;
 public class EmailNotificationTests
 {
     private static EmailNotification Create(DateTimeOffset now) => EmailNotification.Create(Guid.NewGuid(), "correlation", "idempotency",
-        "Customer@Example.com", "Customer", "sender@example.com", "Sender", null, "payment-confirmed", 1,
-        "{}", null, NotificationPriority.Normal, NotificationSource.RestApi, now, null, now);
+        "Customer@Example.com", "Customer", "sender@example.com", "Sender", null, "payment-confirmed",
+        "{}", null, NotificationSource.RestApi, now, null, now);
 
     [Fact]
     public void Create_normalizes_recipient_and_starts_pending()

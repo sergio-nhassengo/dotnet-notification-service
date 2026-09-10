@@ -1,0 +1,9 @@
+TAN trips history for customs
+
+Please find attached the TAN trips history report for customs.
+
+Reporting period: {{reportPeriod}}
+Generated at: {{generatedAt}}
+Summary: {{summary}}
+
+Review the attached trips history for the stated period.

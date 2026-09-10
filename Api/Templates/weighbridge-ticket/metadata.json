@@ -1,0 +1,37 @@
+{
+  "id": "weighbridge-ticket",
+  "applications": [
+    "otc-api",
+    "weighbridge-api",
+    "tan-webservice"
+  ],
+  "title": "Weighbridge ticket",
+  "minimumAttachments": 1,
+  "source": "otc-api/Infrastructure/Services/EmailService.cs; weighbridge-tan-webservice/API/Workers/SendTicketToTransporterJob.cs",
+  "variables": {
+    "ticketId": {
+      "description": "Ticket",
+      "example": "TKT-104"
+    },
+    "ticketType": {
+      "description": "Ticket type",
+      "example": "Road receipt"
+    },
+    "registrationNumber": {
+      "description": "Truck",
+      "example": "AAA-123-MP"
+    },
+    "orderNumber": {
+      "description": "Order",
+      "example": "ORD-204"
+    },
+    "customerName": {
+      "description": "Customer",
+      "example": "Example Cargo"
+    },
+    "issuedAt": {
+      "description": "Issued at",
+      "example": "09 Sep 2026 10:00 CAT"
+    }
+  }
+}

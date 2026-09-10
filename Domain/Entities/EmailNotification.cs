@@ -7,6 +7,14 @@ public sealed class EmailNotification : BaseEntity<Guid>
 {
     private EmailNotification() { }
 
+    public string ApplicationId { get; private set; } = "legacy";
+    public string? BusinessReference { get; private set; }
+    public string? RequestHash { get; private set; }
+    public string? ContentJson { get; private set; }
+
+    public void SetIntegrationContext(string applicationId, string? businessReference, string? requestHash, string? contentJson) =>
+        (ApplicationId, BusinessReference, RequestHash, ContentJson) = (applicationId, businessReference, requestHash, contentJson);
+
     public Guid MessageId { get; private set; }
     public string CorrelationId { get; private set; } = string.Empty;
     public string IdempotencyKey { get; private set; } = string.Empty;
@@ -16,10 +24,8 @@ public sealed class EmailNotification : BaseEntity<Guid>
     public string? SenderName { get; private set; }
     public string? ReplyTo { get; private set; }
     public string TemplateId { get; private set; } = string.Empty;
-    public int TemplateVersion { get; private set; }
     public string TemplateVariables { get; private set; } = "{}";
     public string? Subject { get; private set; }
-    public NotificationPriority Priority { get; private set; }
     public NotificationStatus Status { get; private set; }
     public NotificationSource Source { get; private set; }
     public DateTimeOffset RequestedAt { get; private set; }
@@ -40,8 +46,8 @@ public sealed class EmailNotification : BaseEntity<Guid>
 
     public static EmailNotification Create(Guid messageId, string correlationId, string idempotencyKey,
         string recipientEmail, string? recipientName, string senderEmail, string? senderName, string? replyTo,
-        string templateId, int templateVersion, string templateVariables, string? subject,
-        NotificationPriority priority, NotificationSource source, DateTimeOffset requestedAt,
+        string templateId,  string templateVariables, string? subject,
+        NotificationSource source, DateTimeOffset requestedAt,
         DateTimeOffset? scheduledAt, DateTimeOffset now)
     {
         return new EmailNotification
@@ -56,10 +62,8 @@ public sealed class EmailNotification : BaseEntity<Guid>
             SenderName = senderName,
             ReplyTo = replyTo,
             TemplateId = templateId,
-            TemplateVersion = templateVersion,
             TemplateVariables = templateVariables,
             Subject = subject,
-            Priority = priority,
             Source = source,
             RequestedAt = requestedAt,
             ScheduledAt = scheduledAt,

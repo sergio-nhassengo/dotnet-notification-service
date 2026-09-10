@@ -1,0 +1,11 @@
+SEW integration failure
+
+A SEW integration operation failed.
+
+Operation: {{operation}}
+Business / file reference: {{reference}}
+Occurred at: {{occurredAt}}
+Error code: {{errorCode}}
+Error summary: {{errorSummary}}
+
+Investigate the integration logs using the reference above and confirm the remote outcome before retrying.

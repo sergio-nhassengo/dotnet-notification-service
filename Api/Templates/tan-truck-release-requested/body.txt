@@ -1,0 +1,20 @@
+Truck release awaiting Operations review
+
+The agent has submitted a truck release. Operations approval is still required.
+
+Truck: {{registrationNumber}}
+TAN: {{tanId}}
+Order: {{orderNumber}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+Customer: {{customerName}}
+Commodity: {{commodity}}
+Destination / slab: {{destination}}
+Mine ticket: {{mineTicketNumber}}
+Mine gross mass (kg): {{mineGrossMass}}
+First mass (kg): {{grossMass}}
+Original hold reason: {{reason}}
+Agent comment: {{agentComment}}
+Agent release submitted at: {{releasedAt}}
+
+Operations must review the release in Weighbridge and record an approval or rejection.

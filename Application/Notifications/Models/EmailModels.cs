@@ -3,7 +3,12 @@ using Domain.Enums;
 namespace Application.Notifications.Models;
 
 public sealed record EmailMessage(Guid MessageId, string RecipientEmail, string? RecipientName,
-    string SenderEmail, string? SenderName, string? ReplyTo, string Subject, string HtmlBody, string TextBody);
+    string SenderEmail, string? SenderName, string? ReplyTo, string Subject, string HtmlBody, string TextBody)
+{
+    public IReadOnlyList<Application.Notifications.Integration.EmailAddress> To { get; init; } = [];
+    public IReadOnlyList<Application.Notifications.Integration.EmailAddress> Cc { get; init; } = [];
+    public IReadOnlyList<Application.Notifications.Integration.DeliveryAttachment> Attachments { get; init; } = [];
+}
 
 public sealed record EmailProviderResult(bool IsSuccess, EmailFailureCategory FailureCategory,
     string? ProviderMessageId, int? StatusCode, string? ErrorCode, string? SafeErrorMessage,
@@ -16,7 +21,10 @@ public sealed record EmailProviderResult(bool IsSuccess, EmailFailureCategory Fa
         new(false, category, null, statusCode, code, message, retryAfter);
 }
 
-public sealed record RenderedEmail(string Subject, string HtmlBody, string TextBody);
+public sealed record RenderedEmail(string Subject, string HtmlBody, string TextBody)
+{
+    public int MinimumAttachments { get; init; }
+}
 public sealed record KafkaEnvelope(Guid MessageKey, string Topic, string Payload,
     IReadOnlyDictionary<string, string> Headers);
 

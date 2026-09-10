@@ -1,0 +1,35 @@
+{
+  "id": "otc-vessel-grt-not-billable",
+  "applications": [
+    "otc-api"
+  ],
+  "title": "Vessel GRT excluded from provider billing",
+  "minimumAttachments": 0,
+  "source": "otc-api/Application/WorkOrders/MarkVesselDeparture.cs",
+  "variables": {
+    "vesselName": {
+      "description": "Vessel",
+      "example": "MV Example"
+    },
+    "workOrderId": {
+      "description": "Work order",
+      "example": "WO-1204"
+    },
+    "grt": {
+      "description": "GRT",
+      "example": "35,000"
+    },
+    "marineVoyageNumber": {
+      "description": "Marine voyage / Contra-Marca",
+      "example": "MV-204"
+    },
+    "departureAt": {
+      "description": "Departure",
+      "example": "09 Sep 2026 18:00 CAT"
+    },
+    "serviceProvider": {
+      "description": "Service provider",
+      "example": "Example Marine Services"
+    }
+  }
+}

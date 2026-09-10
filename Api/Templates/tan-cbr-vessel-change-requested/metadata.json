@@ -1,0 +1,47 @@
+{
+  "id": "tan-cbr-vessel-change-requested",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "CBR vessel change requested",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Application/CBR/UpdateCBRVessel/UpdateCBRVessel.cs",
+  "variables": {
+    "cbrId": {
+      "description": "Cargo booking request",
+      "example": "CBR-104"
+    },
+    "customerName": {
+      "description": "Customer",
+      "example": "Example Cargo"
+    },
+    "agentName": {
+      "description": "Agent",
+      "example": "Example Agent"
+    },
+    "currentVesselName": {
+      "description": "Current vessel",
+      "example": "MV Example"
+    },
+    "requestedVesselName": {
+      "description": "Requested vessel",
+      "example": "MV Replacement"
+    },
+    "commodity": {
+      "description": "Commodity",
+      "example": "Coal"
+    },
+    "parcelNumber": {
+      "description": "Parcel",
+      "example": "PAR-102"
+    },
+    "submittedBy": {
+      "description": "Submitted by",
+      "example": "Example Agent User"
+    },
+    "submittedAt": {
+      "description": "Submitted at",
+      "example": "09 Sep 2026 10:00 CAT"
+    }
+  }
+}

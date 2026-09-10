@@ -1,0 +1,21 @@
+Truck release rejected
+
+Operations has rejected the truck release request. The truck cannot continue in the process.
+
+Truck: {{registrationNumber}}
+TAN: {{tanId}}
+Order: {{orderNumber}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+Customer: {{customerName}}
+Commodity: {{commodity}}
+Destination / slab: {{destination}}
+Mine ticket: {{mineTicketNumber}}
+Mine gross mass (kg): {{mineGrossMass}}
+First mass (kg): {{grossMass}}
+On hold since: {{onHoldAt}}
+Original hold reason: {{reason}}
+Agent comment: {{agentComment}}
+Operations supervisor comment: {{supervisorComment}}
+
+Review the reason and comments in TAN before submitting a new release request.

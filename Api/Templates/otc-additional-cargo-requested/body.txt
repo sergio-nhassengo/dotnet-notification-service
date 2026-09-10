@@ -1,0 +1,10 @@
+Additional cargo approval required
+
+An additional cargo requisition has been submitted and awaits approval.
+
+Request: {{requestId}}
+Vessel: {{vesselName}}
+Work order: {{workOrderId}}
+Agent: {{agentName}}
+
+Review the requisition in OTC and record your decision.

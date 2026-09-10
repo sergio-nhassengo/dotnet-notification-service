@@ -5,6 +5,10 @@ EF Core / SQL Server persistence, and OpenTelemetry-based observability wired in
 
 ## Email notification service
 
+See [the integration implementation report](docs/notification-service-integration-report.md) for application credentials,
+rich email/attachment examples, migration instructions, verification and remaining integration work.
+The [domain template catalogue](docs/domain-notification-templates.md) documents 28 OTC, Weighbridge and TAN templates, their variables and attachment requirements.
+
 The repository now includes a production-oriented, email-only notification pipeline. Its channel-neutral application
 boundaries (`IEmailProvider`, renderer, Kafka publisher, and persistence store) allow SMS, push, or WhatsApp adapters to
 be added without changing the email workflow. The API and workers remain in the existing single host; registrations are
@@ -35,7 +39,7 @@ sequenceDiagram
 flowchart LR
     Due[Due delivery] --> Send[Provider call]
     Send -->|success| Sent[Sent]
-    Send -->|transient / 429| Retry[Persist next attempt with jitter]
+    Send -->|transient / 429| Retry[Persist next attempt]
     Retry -->|attempts remain| Due
     Retry -->|exhausted| Failed[Persist failure + DLQ outbox]
     Send -->|permanent / invalid template| Failed
@@ -47,14 +51,14 @@ flowchart LR
 
 ### Request and status API
 
-All notification operations use the existing JWT authentication fallback policy. Replay additionally requires the
-`RequireAdmin` policy. Writes are limited to 60 requests per minute per authenticated identity/IP and request bodies to
-64 KiB.
+Notification operations accept application API keys or JWTs with send/read permissions; legacy JWT callers can use
+the legacy profile while enabled. Replay requires `RequireAdmin`. JSON requests are limited to 512 KiB. Per-application
+recipient and attachment limits are enforced; request rate limiting is not implemented.
 
 ```bash
 curl -i -X POST https://localhost:5001/api/v1/notifications/email \
   -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" \
-  -d '{"idempotencyKey":"payment-123-confirmation","correlationId":"payment-123","recipient":{"email":"customer@example.com","name":"Customer Name"},"templateId":"payment-confirmed","templateVersion":1,"variables":{"customerName":"Customer Name","paymentReference":"PAY-123"},"subject":null,"priority":"Normal","scheduledAt":null}'
+  -d '{"idempotencyKey":"payment-123-confirmation","correlationId":"payment-123","recipient":{"email":"customer@example.com","name":"Customer Name"},"templateId":"payment-confirmed","variables":{"customerName":"Customer Name","paymentReference":"PAY-123"},"subject":null,"scheduledAt":null}'
 
 curl -H "Authorization: Bearer $ACCESS_TOKEN" \
   https://localhost:5001/api/v1/notifications/NOTIFICATION_ID
@@ -64,7 +68,7 @@ curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
 ```
 
 The POST returns `202 Accepted`, a `Location` header, and `notificationId`, `messageId`, and current `status`. Reusing an
-idempotency key returns that original notification. Status includes safe failure fields and attempt summaries; provider
+idempotency key within the same application returns that original notification; different content returns 409. Status includes safe failure fields and attempt summaries; provider
 exceptions, credentials, message bodies, and template variables are never returned.
 
 ### Reliability model
@@ -72,14 +76,17 @@ exceptions, credentials, message bodies, and template variables are never return
 - REST acceptance commits the notification and `EmailRequestedV1` outbox row atomically. The single outbox worker reads
   and publishes one due row at a time with Kafka `acks=all` and idempotent production, then acknowledges it and
   immediately checks for the next row.
-- Direct Kafka input converges on the same notification/delivery tables. `notification-service-email-v1` disables auto
+- With Kafka disabled, REST queues directly in the database; exhausted failures remain permanently failed without a DLQ outbox.
+- Legacy V1 direct Kafka input converges on the same notification/delivery tables. `notification-service-email-v1` disables auto
   commit/store and commits only after a unique inbox row and delivery state are durable. Invalid/unsupported contracts
-  are safely described and sent to the DLQ through an outbox row.
-- The single delivery worker sequentially reads and delivers one due notification at a time, immediately continuing
-  while work exists and waiting for the polling interval only when idle. The
-  default schedule is immediate, approximately 1, 5, and 15 minutes,
-  then 1 hour, with ±20% jitter. Timeouts, network errors, 408, 429, and 5xx are transient. Invalid content and recipients
-  are permanent. Provider 401/403 responses are configuration failures and are not aggressively retried.
+  are safely described and sent to the DLQ through an outbox row. Application-scoped messages must match a persisted REST submission.
+- The single delivery worker processes one due notification at a time using FIFO order. Notifications are ordered by
+  `NextAttemptAt`, then `CreatedAt`, then `Id`. It immediately continues while work exists and waits for the polling
+  interval only when idle. The common `RetryPolicy` uses fixed delays of 1, 5, and 15 minutes, then 1 hour for the fourth
+  and subsequent failures; no jitter is applied. A provider `Retry-After` value is treated as a minimum delay. Retry
+  stops when the configured maximum attempts is reached. Failure classification remains channel-specific: the email
+  worker retries transient and rate-limited failures, while invalid content and recipients are permanent and provider
+  401/403 responses are configuration failures that are not retried.
 - Permanent/exhausted failures atomically create a DLQ outbox record and retain attempt history. The service deliberately
   does not consume the DLQ. Admin replay appends a `NotificationReplays` audit row and schedules a validated new attempt.
 - Delivery is at least once. There is an unavoidable crash window after a provider accepts a message but before local
@@ -105,32 +112,32 @@ Kafka is external and is intentionally absent from `compose.yaml`. Provision the
 | `dlq-topic-notification` | 3 | 3 | 2 | delete | 30 days | 1,048,576 bytes |
 
 Topic and group names are configuration, not code constants. JSON contracts carry `ContractVersion`; `MessageId` is the
-Kafka key, while correlation, causation, and schema version are headers. Kafka payloads contain no attachments or binary
-content.
+Kafka key, while correlation, causation, and schema version are headers. Email payloads carry attachment references, not binary content.
 
 ### Notification configuration
 
 Safe defaults are in `Api/appsettings.json`. Production should override values using environment variables or the
 deployment secret store, for example `Kafka__BootstrapServers`, `EmailProvider__Provider=Brevo`,
 `EmailProvider__ApiKey`, and `EmailProvider__DefaultSenderEmail`. No real credential belongs in appsettings or source.
-Brevo uses one `IHttpClientFactory` client with a configured timeout; `Fake` is the local/test provider. Sender and
-template allow-lists prevent open-relay behavior, subject overrides are disabled by default, and file templates are
-versioned under `Api/Templates/<template-id>/v<version>`. Identifiers are strictly checked against path traversal,
+Brevo uses one `IHttpClientFactory` client with a configured timeout; SMTP supports existing mail relays and inline logos.
+`Fake` is the local/test provider. Application profiles control senders, templates, subject overrides and raw content.
+File templates are stored under `Api/Templates/<template-id>`. Identifiers are strictly checked against path traversal,
 required variables are validated, and HTML substitutions are encoded.
 
-Important option sections are `Kafka`, `Outbox`, `EmailDelivery`, `EmailProvider`, and `EmailTemplates`. Options use
+Important option sections are `Kafka`, `Outbox`, `EmailDelivery`, `EmailProvider`, `EmailTemplates`, `Smtp`, and `NotificationIntegration`. Options use
 startup validation. Apply the schema and run with:
 
 ```bash
 dotnet restore MPDCApiTemplate.sln
-dotnet ef database update --project Persistence --startup-project Api
+dotnet ef database update \
+  --project Persistence \
+  --startup-project Api
 dotnet run --project Api
 ```
 
-Health endpoints are `/health/live` (process only) and `/health/ready` (SQL Server, Kafka, and email configuration).
-Serilog fields and OpenTelemetry spans/metrics cover notification/message/correlation IDs, Kafka coordinates, provider,
-attempt, outcome, and duration without logging recipients or content. Metrics include request/sent/failure/retry/DLQ
-counters, provider duration, Kafka lag, and pending/oldest-age gauges for outbox and delivery work.
+Health endpoints are `/health/live` (process only) and `/health/ready` (database). Provider/Kafka readiness probes and
+notification-specific queue metrics remain future work. Worker logs include notification/message/correlation IDs,
+provider, attempt, outcome and duration. Notification MediatR request payloads are excluded from request logs.
 
 ## Architecture
 
@@ -252,21 +259,35 @@ A `diagnostics/throw-exception` endpoint is included to exercise the global exce
 
 ### Postman API tests
 
-Import `postman/MPDCApiTemplate.postman_collection.json` and
-`postman/MPDCApiTemplate.Docker.postman_environment.json`, select the **MPDCApiTemplate - Rider Docker** environment,
-and run the collection in order. It creates a unique user, captures its JWT and notification ID, then exercises health,
-authentication, notification/idempotency, authorization, validation, and diagnostics scenarios. The environment targets
-`http://localhost:8080`; change `baseUrl` to `http://localhost:5290` when running the API directly instead of through Rider/Docker.
+Import [the Postman collection](postman/MPDCApiTemplate.postman_collection.json) and
+[the local environment](postman/MPDCNotificationService.Local.postman_environment.json).
+Configure the three application API secrets, then run the collection in order. It covers notification creation,
+every configured template/application pairing, attachments, idempotency, authentication, validation, search,
+application isolation, and optional admin replay and delivery polling.
 
-Admin replay requires an existing Admin user: set `adminUsername` and the secret `adminPassword` environment variable
-before running that request. Replay also requires a notification in `PermanentlyFailed` or `DeadLettered` state.
+See [the Postman setup and scenario guide](postman/README.md) for prerequisites, configuration-dependent cases,
+and infrastructure scenarios that require separate tests. The default API address is `http://localhost:8080`;
+change `baseUrl` to match your local deployment.
 
 ### Database migrations
 
 EF Core migrations live in `Persistence/Migrations`. With the `dotnet-ef` global tool installed:
 
 ```bash
-dotnet ef database update --project Persistence --startup-project Api
+# Add a migration
+dotnet ef migrations add MigrationName \
+  --project Persistence \
+  --startup-project Api
+
+# Apply migrations
+dotnet ef database update \
+  --project Persistence \
+  --startup-project Api
+
+# Generate a migration script
+dotnet ef migrations script \
+  --project Persistence \
+  --startup-project Api
 ```
 
 ### Docker

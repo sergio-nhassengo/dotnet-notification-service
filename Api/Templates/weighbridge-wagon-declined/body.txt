@@ -1,0 +1,11 @@
+Wagon declined
+
+The wagon below has been declined.
+
+Wagon: {{wagonNumber}}
+Rail order: {{railOrderNumber}}
+Consignment: {{consignmentNumber}}
+Customer: {{customerName}}
+Decision details: {{reason}}
+
+Review the wagon decision in Weighbridge.

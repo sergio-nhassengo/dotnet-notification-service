@@ -21,10 +21,14 @@ public sealed class OutboxCleanupWorker(IServiceScopeFactory scopes, IOptions<Ou
             {
                 using var scope = scopes.CreateScope();
                 var count = await scope.ServiceProvider.GetRequiredService<ISender>()
-                    .Send(new CleanupProcessedOutboxCommand(clock.Now.AddDays(-options.Value.ProcessedRetentionDays)), ct);
+                    .Send(new CleanupProcessedOutboxCommand(clock.Now.AddDays(-options.Value.ProcessedRetentionDays)),
+                        ct);
                 logger.LogInformation("Removed {OutboxCleanupCount} processed outbox records", count);
             }
-            catch (Exception ex) when (!ct.IsCancellationRequested) { logger.LogError(ex, "Outbox cleanup failed"); }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                logger.LogError(ex, "Outbox cleanup failed");
+            }
         }
     }
 }

@@ -32,4 +32,10 @@
       <ProjectReference Include="..\Persistence\Persistence.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Templates/**/*" />
+      <Content Remove="Templates/**/*" />
+      <Content Include="Templates/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+
 </Project>

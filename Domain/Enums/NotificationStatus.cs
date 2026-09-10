@@ -11,7 +11,6 @@ public enum NotificationStatus
     DeadLettered
 }
 
-public enum NotificationPriority { Low, Normal, High }
 public enum NotificationSource { RestApi, Kafka }
 public enum DeliveryOutcome { Succeeded, TransientFailure, PermanentFailure, RateLimited, ConfigurationFailure }
 public enum EmailFailureCategory { None, Transient, Permanent, RateLimited, Configuration }

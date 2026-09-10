@@ -2,19 +2,18 @@ using System.Text.Json;
 using Application.Common.Interfaces;
 using Application.Features.Notifications.Commands.Outbox;
 using Application.Features.Notifications.Queries.Outbox;
-using Application.Notifications.Interfaces;
 using Application.Notifications.Models;
-using Application.Notifications.Security;
+using Infrastructure.Notifications.Kafka;
 using Infrastructure.Notifications.Options;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using MediatR;
 
 namespace Infrastructure.Notifications.Workers;
 
-public sealed class OutboxPublisherWorker(IServiceScopeFactory scopes, IKafkaPublisher publisher,
+public sealed class OutboxPublisherWorker(IServiceScopeFactory scopes, KafkaPublisher publisher,
     IOptions<OutboxOptions> options, IDateTime clock, ILogger<OutboxPublisherWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -56,7 +55,7 @@ public sealed class OutboxPublisherWorker(IServiceScopeFactory scopes, IKafkaPub
             var seconds = Math.Min(300, Math.Pow(2, Math.Min(message.AttemptCount, 8))) * (0.8 + Random.Shared.NextDouble() * 0.4);
             using var scope = scopes.CreateScope();
             await scope.ServiceProvider.GetRequiredService<ISender>()
-                .Send(new FailOutboxMessageCommand(message.Id, SafeError.Sanitize(ex.Message), clock.Now.AddSeconds(seconds)), ct);
+                .Send(new FailOutboxMessageCommand(message.Id, ex.Message, clock.Now.AddSeconds(seconds)), ct);
             logger.LogWarning("Outbox publish failed for {MessageId}; attempt {AttemptNumber}", message.MessageKey, message.AttemptCount + 1);
         }
         return true;

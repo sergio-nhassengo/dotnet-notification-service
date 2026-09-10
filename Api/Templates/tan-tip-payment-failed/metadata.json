@@ -1,0 +1,63 @@
+{
+  "id": "tan-tip-payment-failed",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "TIP payment failed",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs",
+  "variables": {
+    "registrationNumber": {
+      "description": "Truck",
+      "example": "AAA-123-MP"
+    },
+    "tanId": {
+      "description": "TAN",
+      "example": "TAN-1204"
+    },
+    "orderNumber": {
+      "description": "Order",
+      "example": "ORD-204"
+    },
+    "transporterName": {
+      "description": "Transporter",
+      "example": "Example Transporter"
+    },
+    "trailer1": {
+      "description": "Trailer 1",
+      "example": "TRL-101"
+    },
+    "trailer2": {
+      "description": "Trailer 2",
+      "example": "Not applicable"
+    },
+    "mineTicketNumber": {
+      "description": "Mine ticket",
+      "example": "MT-204"
+    },
+    "customerName": {
+      "description": "Cargo owner",
+      "example": "Example Cargo"
+    },
+    "declarationNumber": {
+      "description": "Declaration",
+      "example": "DEC-104"
+    },
+    "paymentReference": {
+      "description": "Payment reference",
+      "example": "PAY-104"
+    },
+    "amount": {
+      "description": "Amount",
+      "example": "1,250.00"
+    },
+    "currency": {
+      "description": "Currency",
+      "example": "MZN"
+    },
+    "reason": {
+      "description": "Bank failure reason",
+      "example": "The bank rejected the payment reference."
+    }
+  }
+}

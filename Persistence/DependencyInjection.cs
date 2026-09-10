@@ -21,10 +21,13 @@ public static class DependencyInjection
                 return;
             }
 
-            if (!provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException($"Unsupported database provider '{provider}'. Use 'SqlServer' or 'Sqlite'.");
+            if (provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
+            {
+                options.UseSqlServer(connectionString);
+                return;
+            }
 
-            options.UseSqlServer(connectionString);
+            throw new InvalidOperationException($"Unsupported database provider '{provider}'. Use 'SqlServer' or 'Sqlite'.");
         });
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());

@@ -1,0 +1,12 @@
+Weighbridge ticket
+
+Please find attached the weighbridge ticket.
+
+Ticket: {{ticketId}}
+Ticket type: {{ticketType}}
+Truck: {{registrationNumber}}
+Order: {{orderNumber}}
+Customer: {{customerName}}
+Issued at: {{issuedAt}}
+
+Retain the attached ticket for your records.

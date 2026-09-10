@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Application.Features.Notifications.Commands.AcceptKafkaEmail;
 
 public sealed record AcceptKafkaEmailCommand(EmailNotification? Notification, InboxMessage Inbox,
-    OutboxMessage? InvalidDlq) : IRequest<bool>;
+    OutboxMessage? InvalidDlq, Guid? RejectedNotificationId = null) : IRequest<bool>;
 
 public sealed class AcceptKafkaEmailCommandHandler(IApplicationDbContext db)
     : IRequestHandler<AcceptKafkaEmailCommand, bool>
@@ -25,7 +25,7 @@ public sealed class AcceptKafkaEmailCommandHandler(IApplicationDbContext db)
         {
             var candidate = request.Notification;
             var existing = await db.EmailNotifications.FirstOrDefaultAsync(x =>
-                x.MessageId == candidate.MessageId || x.IdempotencyKey == candidate.IdempotencyKey,
+                x.MessageId == candidate.MessageId || (x.ApplicationId == candidate.ApplicationId && x.IdempotencyKey == candidate.IdempotencyKey),
                 cancellationToken);
             if (existing is null)
             {
@@ -39,7 +39,18 @@ public sealed class AcceptKafkaEmailCommandHandler(IApplicationDbContext db)
         }
 
         if (request.InvalidDlq is not null)
+        {
             db.OutboxMessages.Add(request.InvalidDlq);
+            if (request.RejectedNotificationId is not null)
+            {
+                var rejected = await db.EmailNotifications.SingleOrDefaultAsync(x => x.Id == request.RejectedNotificationId && x.Status == NotificationStatus.Pending, cancellationToken);
+                if (rejected is not null)
+                {
+                    rejected.MarkPermanentlyFailed("Kafka.ValidationFailed", "The queued request no longer passes validation.", request.Inbox.ReceivedAt);
+                    rejected.MarkDeadLettered(request.Inbox.ReceivedAt);
+                }
+            }
+        }
 
         try
         {

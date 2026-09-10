@@ -25,6 +25,12 @@ public class PerformanceBehaviour<TRequest, TResponse>(
 
         if (stopwatch.ElapsedMilliseconds > SlowRequestThresholdMilliseconds)
         {
+            if (typeof(TRequest).Namespace?.Contains(".Features.Notifications.", StringComparison.Ordinal) == true)
+            {
+                logger.LogWarning("Slow request: {RequestName} ({ElapsedMilliseconds}ms) for user {UserId}",
+                    typeof(TRequest).Name, stopwatch.ElapsedMilliseconds, currentUserService.UserId ?? "anonymous");
+                return response;
+            }
             logger.LogWarning(
                 "Slow request: {RequestName} ({ElapsedMilliseconds}ms) for user {UserId} {@Request}",
                 typeof(TRequest).Name,

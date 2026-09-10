@@ -1,0 +1,12 @@
+Shipping sequence deactivated
+
+The cargo below has been deactivated for the shipping sequence.
+
+Shipping order: {{shippingOrderId}}
+Commodity: {{commodity}}
+Customer: {{customerName}}
+Parcel: {{parcelNumber}}
+Hatch: {{hatch}}
+Position: {{position}}
+
+Review the shipping sequence in Weighbridge.

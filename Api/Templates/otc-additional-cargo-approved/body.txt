@@ -1,0 +1,11 @@
+Additional cargo approved
+
+The additional cargo request has been approved.
+
+Request: {{requestId}}
+Vessel: {{vesselName}}
+Work order: {{workOrderId}}
+Agent: {{agentName}}
+Quantity to add (kg): {{quantityKg}}
+
+Review the approved request in OTC before updating the cargo operation.

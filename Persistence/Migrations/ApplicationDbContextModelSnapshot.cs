@@ -83,8 +83,22 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ApplicationId")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasDefaultValue("legacy");
+
                     b.Property<int>("AttemptCount")
                         .HasColumnType("int");
+
+                    b.Property<string>("BusinessReference")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ContentJson")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CorrelationId")
                         .IsRequired()
@@ -126,9 +140,6 @@ namespace Persistence.Migrations
                         .HasMaxLength(249)
                         .HasColumnType("nvarchar(249)");
 
-                    b.Property<int>("Priority")
-                        .HasColumnType("int");
-
                     b.Property<string>("ProviderMessageId")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -145,6 +156,10 @@ namespace Persistence.Migrations
                     b.Property<string>("ReplyTo")
                         .HasMaxLength(320)
                         .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("RequestHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<DateTimeOffset>("RequestedAt")
                         .HasColumnType("datetimeoffset");
@@ -184,9 +199,6 @@ namespace Persistence.Migrations
                         .HasMaxLength(20000)
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TemplateVersion")
-                        .HasColumnType("int");
-
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -194,10 +206,12 @@ namespace Persistence.Migrations
 
                     b.HasIndex("CorrelationId");
 
-                    b.HasIndex("IdempotencyKey")
+                    b.HasIndex("MessageId")
                         .IsUnique();
 
-                    b.HasIndex("MessageId")
+                    b.HasIndex("ApplicationId", "BusinessReference");
+
+                    b.HasIndex("ApplicationId", "IdempotencyKey")
                         .IsUnique();
 
                     b.HasIndex("Status", "NextAttemptAt");
@@ -249,6 +263,41 @@ namespace Persistence.Migrations
                     b.HasIndex("Topic", "Partition", "Offset");
 
                     b.ToTable("InboxMessages", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.NotificationAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ApplicationId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId", "CreatedAt");
+
+                    b.ToTable("NotificationAttachments", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.NotificationReplay", b =>

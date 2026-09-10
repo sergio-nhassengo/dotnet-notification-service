@@ -1,0 +1,9 @@
+Rail consignment alert
+
+An update has been issued for the rail consignment below.
+
+Consignment: {{consignmentNumber}}
+Update: {{message}}
+Requested by: {{requestedBy}}
+
+Review the consignment in the rail workflow.

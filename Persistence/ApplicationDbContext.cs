@@ -21,6 +21,8 @@ public class ApplicationDbContext(
 
     public DbSet<Role> Roles => Set<Role>();
 
+    public DbSet<NotificationAttachment> NotificationAttachments => Set<NotificationAttachment>();
+
     public DbSet<EmailNotification> EmailNotifications => Set<EmailNotification>();
     public DbSet<DeliveryAttempt> DeliveryAttempts => Set<DeliveryAttempt>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();

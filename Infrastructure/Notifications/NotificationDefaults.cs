@@ -1,4 +1,4 @@
-using Application.Notifications.Interfaces;
+using Application.Common.Notifications;
 using Infrastructure.Notifications.Options;
 using Microsoft.Extensions.Options;
 

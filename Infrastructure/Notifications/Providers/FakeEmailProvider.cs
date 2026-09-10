@@ -1,4 +1,4 @@
-using Application.Notifications.Interfaces;
+using Application.Common.Email;
 using Application.Notifications.Models;
 
 namespace Infrastructure.Notifications.Providers;

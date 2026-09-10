@@ -1,4 +1,5 @@
 using Application;
+using MPDCApiTemplate.Development;
 using MPDCApiTemplate.ExceptionHandlers;
 using MPDCApiTemplate.OpenApi;
 using Infrastructure;
@@ -40,10 +41,15 @@ if (builder.Configuration["Database:Provider"]?.Equals("Sqlite", StringCompariso
     await db.Database.EnsureCreatedAsync();
 }
 
+await DevelopmentAccountSeeder.SeedAsync(app);
+
 app.MapOpenApi().WithMetadata(new AllowAnonymousAttribute());
+app.MapGet("/", () => Results.Redirect("swagger")).AllowAnonymous().ExcludeFromDescription();
 
 app.UseSwaggerUI(options =>
 {
+    options.RoutePrefix = "swagger";
+    options.DocumentTitle = "MPDC Notification Service API Documentation";
     options.SwaggerEndpoint("/openapi/v1.json", "MPDCApiTemplate v1");
 });
 

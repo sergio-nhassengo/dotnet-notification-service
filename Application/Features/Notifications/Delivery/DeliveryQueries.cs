@@ -22,8 +22,9 @@ public sealed class GetNextDueEmailDeliveryQueryHandler(IApplicationDbContext db
             .AsNoTracking()
             .Where(x => eligibleStates.Contains(x.Status) &&
                         x.NextAttemptAt.HasValue && x.NextAttemptAt.Value <= request.Now)
-            .OrderByDescending(x => x.Priority)
-            .ThenBy(x => x.NextAttemptAt)
+            .OrderBy(x => x.NextAttemptAt)
+            .ThenBy(x => x.CreatedAt)
+            .ThenBy(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

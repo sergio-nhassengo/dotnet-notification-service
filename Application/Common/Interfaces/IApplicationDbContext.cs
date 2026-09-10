@@ -11,6 +11,8 @@ public interface IApplicationDbContext
 
     DbSet<Role> Roles { get; }
 
+    DbSet<NotificationAttachment> NotificationAttachments { get; }
+
     DbSet<EmailNotification> EmailNotifications { get; }
     DbSet<DeliveryAttempt> DeliveryAttempts { get; }
     DbSet<OutboxMessage> OutboxMessages { get; }

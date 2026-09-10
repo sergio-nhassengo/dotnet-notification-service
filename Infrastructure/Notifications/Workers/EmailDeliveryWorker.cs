@@ -1,27 +1,30 @@
+using Application.Notifications.Integration;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Text.Json;
+using Application.Common.Email;
 using Application.Common.Interfaces;
+using Application.Common.Messaging;
+using Application.Common.Notifications;
+using Application.Common.Retry;
 using Application.Features.Notifications.Commands.Delivery;
 using Application.Features.Notifications.Queries.Delivery;
 using Application.Notifications.Contracts;
-using Application.Notifications.Interfaces;
 using Application.Notifications.Models;
-using Application.Notifications.Retry;
-using Application.Notifications.Security;
 using Domain.Entities;
 using Domain.Enums;
 using Infrastructure.Notifications.Options;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using MediatR;
 
 namespace Infrastructure.Notifications.Workers;
 
 public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<EmailDeliveryOptions> deliveryOptions,
-    INotificationDefaults defaults, IIntegrationEventSerializer serializer, IDateTime clock,
-    EmailRetryPolicy retryPolicy, ILogger<EmailDeliveryWorker> logger) : BackgroundService
+    INotificationDefaults defaults, IntegrationEventJsonSerializer serializer, IDateTime clock,
+    RetryPolicy retryPolicy, ILogger<EmailDeliveryWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -54,28 +57,66 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
     private async Task DeliverNotification(EmailNotification n, CancellationToken ct)
     {
         string providerName;
-        var started = clock.Now; var sw = Stopwatch.StartNew(); EmailProviderResult result;
+        var started = clock.Now; var sw = Stopwatch.StartNew();
+        EmailProviderResult result;
         using (var deliveryScope = scopes.CreateScope())
         {
             var provider = deliveryScope.ServiceProvider.GetRequiredService<IEmailProvider>();
-            var renderer = deliveryScope.ServiceProvider.GetRequiredService<IEmailTemplateRenderer>();
+            var renderer = deliveryScope.ServiceProvider.GetRequiredService<FileEmailTemplateRenderer>();
             providerName = provider.Name;
             try
             {
                 var variables = JsonSerializer.Deserialize<Dictionary<string, string>>(n.TemplateVariables) ?? [];
-                var rendered = await renderer.RenderAsync(n.TemplateId, n.TemplateVersion, variables, ct);
+                var content = n.ContentJson is null ? new EmailContent { To = [new(n.RecipientEmail, n.RecipientName)] }
+                    : JsonSerializer.Deserialize<EmailContent>(n.ContentJson)!;
+                var rendered = content.HtmlBody is not null || content.TextBody is not null
+                    ? new RenderedEmail(n.Subject!, content.HtmlBody ?? "", content.TextBody ?? "")
+                    : await renderer.RenderAsync(n.TemplateId, variables, ct);
+                if (content.Attachments.Count(x => x.ContentId is null) < rendered.MinimumAttachments)
+                    throw new TemplateException("This template requires a document attachment.");
+                var db = deliveryScope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+                var ids = content.Attachments.Select(x => x.AttachmentId).ToArray();
+                var stored = await db.NotificationAttachments.AsNoTracking()
+                    .Where(x => x.ApplicationId == n.ApplicationId && ids.Contains(x.Id)).ToListAsync(ct);
+                if (stored.Count != ids.Length) throw new TemplateException("A required attachment is unavailable.");
                 result = await provider.SendAsync(new EmailMessage(n.MessageId, n.RecipientEmail, n.RecipientName,
-                    n.SenderEmail, n.SenderName, n.ReplyTo, n.Subject ?? rendered.Subject, rendered.HtmlBody, rendered.TextBody), ct);
+                    n.SenderEmail, n.SenderName, n.ReplyTo, n.Subject ?? rendered.Subject, rendered.HtmlBody,
+                    rendered.TextBody)
+                {
+                    To = content.To, Cc = content.Cc,
+                    Attachments = content.Attachments.Select(reference =>
+                    {
+                        var file = stored.Single(x => x.Id == reference.AttachmentId);
+                        return new DeliveryAttachment(file.FileName, file.ContentType, file.Content, reference.ContentId);
+                    }).ToArray()
+                }, ct);
             }
-            catch (TemplateException ex) { result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.Invalid", SafeError.Sanitize(ex.Message)); }
-            catch (JsonException) { result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.VariablesMalformed", "Template variables are malformed."); }
+            catch (TemplateException ex)
+            {
+                result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.Invalid", ex.Message);
+            }
+            catch (IOException)
+            {
+                result = EmailProviderResult.Failure(EmailFailureCategory.Transient, "Content.Unavailable", "Email content could not be read.");
+            }
+            catch (JsonException)
+            {
+                result = EmailProviderResult.Failure(EmailFailureCategory.Permanent, "Template.VariablesMalformed", "Template variables are malformed.");
+            }
         }
         sw.Stop();
-        var attempt = n.AttemptCount + 1; DateTimeOffset? next = null;
-        if (!result.IsSuccess && retryPolicy.ShouldRetry(result.FailureCategory, attempt, deliveryOptions.Value.MaximumAttempts))
-            next = retryPolicy.NextAttempt(clock.Now, attempt + 1, result.RetryAfter, Random.Shared.NextDouble() * .4 - .2);
+        var attempt = n.AttemptCount + 1;
+        var retryable = IsRetryable(result.FailureCategory);
+        var shouldRetry =
+            retryable &&
+            retryPolicy.HasAttemptsRemaining(
+                attempt,
+                deliveryOptions.Value.MaximumAttempts);
+        DateTimeOffset? next = null;
+        if (shouldRetry)
+            next = retryPolicy.GetNextAttemptAt(clock.Now, attempt, result.RetryAfter);
         OutboxMessage? dlq = null;
-        if (!result.IsSuccess && next is null)
+        if (!result.IsSuccess && next is null && UsesKafka())
         {
             var dead = new EmailDeadLetteredV1(n.MessageId, n.CorrelationId, n.OriginalTopic ?? defaults.EmailRequestedTopic,
                 n.OriginalPartition, n.OriginalOffset, result.FailureCategory.ToString(), result.ErrorCode ?? "Delivery.Failed",
@@ -104,4 +145,13 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IOptions<Em
             logger.LogCritical("Email provider configuration failure: NotificationId {NotificationId}, MessageId {MessageId}, Provider {Provider}, ErrorCode {ErrorCode}",
                 n.Id, n.MessageId, providerName, result.ErrorCode);
     }
+
+    private bool UsesKafka()
+    {
+        using var scope = scopes.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<INotificationApplications>().UseKafka;
+    }
+
+    private static bool IsRetryable(EmailFailureCategory failureCategory) =>
+        failureCategory is EmailFailureCategory.Transient or EmailFailureCategory.RateLimited;
 }
