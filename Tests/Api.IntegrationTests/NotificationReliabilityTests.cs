@@ -106,31 +106,6 @@ public sealed class NotificationReliabilityTests
         consumer.Received(2).Commit(item);
     }
 
-    [Fact]
-    public async Task Cleanup_deletes_only_expired_attachments_across_applications()
-    {
-        await using var factory = new NotificationSqliteFactory();
-        _ = factory.Client("otc-api");
-        var now = DateTimeOffset.UtcNow;
-        var clock = Substitute.For<IDateTime>(); clock.Now.Returns(now);
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        foreach (var app in new[] { "otc-api", "tan-webservice" })
-        foreach (var created in new[] { now.AddDays(-8), now.AddDays(-7), now })
-            db.NotificationAttachments.Add(new NotificationAttachment
-            {
-                Id = Guid.NewGuid(), ApplicationId = app, FileName = "a.txt", ContentType = "text/plain",
-                Content = [1], CreatedAt = created
-            });
-        await db.SaveChangesAsync();
-        using var worker = new AttachmentCleanupWorker(factory.Services.GetRequiredService<IServiceScopeFactory>(),
-            Options.Create(new NotificationAttachmentOptions { RetentionDays = 7 }), clock,
-            NullLogger<AttachmentCleanupWorker>.Instance);
-        Assert.Equal(2, await worker.CleanupAsync(default));
-        Assert.Equal(0, await worker.CleanupAsync(default));
-        Assert.Equal(4, await db.NotificationAttachments.CountAsync());
-    }
-
     private static KafkaEmailConsumerWorker Worker(NotificationSqliteFactory factory, IConsumer<string, string> consumer) =>
         new(consumer, factory.Services.GetRequiredService<KafkaEmailMessageProcessor>(),
             Options.Create(new KafkaOptions()), NullLogger<KafkaEmailConsumerWorker>.Instance);

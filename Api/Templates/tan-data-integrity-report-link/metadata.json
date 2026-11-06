@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Data integrity report available",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/DataIntegrityService.cs",
   "variables": {
     "scope": {

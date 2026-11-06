@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Rail consignment alert",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/RAN/RailConsignments/ReceiveRailConsignment.cs",
   "variables": {
     "consignmentNumber": {

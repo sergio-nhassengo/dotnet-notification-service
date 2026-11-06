@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "SEW response errors",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/API/Workers/SewSFTP/SewIntegrationErrorsDownloadWorker.cs",
   "variables": {
     "fileName": {

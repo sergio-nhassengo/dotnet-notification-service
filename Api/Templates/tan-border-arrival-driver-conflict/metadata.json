@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Border arrival: driver assigned to other trucks",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/Tan/UpdateTanBorderArrivalTime.cs",
   "variables": {
     "tanId": {

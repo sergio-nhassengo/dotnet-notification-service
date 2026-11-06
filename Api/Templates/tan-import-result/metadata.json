@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "TAN import result",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/TanService.cs",
   "variables": {
     "fileName": {

@@ -19,9 +19,9 @@ TAN business logic / existing worker → awaited HTTP call → notification-serv
 
 Use a simple direct integration: no TAN notification-intent table, local outbox, or new dispatch worker. Durable storage and delivery retries remain inside notification-service. Existing TAN business records and workers remain in place. TAN makes one attempt per request and logs failures; it performs no automatic HTTP retry, delayed resubmission or SMTP fallback.
 
-TAN retains event eligibility, recipients, domain data and SSRS report generation. Notification-service owns template rendering, configured sender, attachments, provider delivery, delivery retries and status. TAN should not publish directly to Kafka or reference the service's .NET 10 projects from its .NET 8 projects; use HTTP DTOs.
+TAN retains event eligibility, recipients, domain data and SSRS report generation. Notification-service owns template rendering, configured sender, provider delivery, delivery retries and status. TAN should not publish directly to Kafka or reference the service's .NET 10 projects from its .NET 8 projects; use HTTP DTOs.
 
-The service provides API-key authentication, `POST /api/v1/notifications/email`, attachment upload, status lookup, idempotency and TAN templates. Submit each notification independently with its own stable idempotency key. Upload shared documents once and reuse their attachment IDs across the relevant requests.
+The service provides API-key authentication, `POST /api/v1/notifications/email`, status lookup, idempotency and TAN templates. Submit each notification independently with its own stable idempotency key. The service does not send attachments; workflows that currently attach documents need another delivery path, such as a link.
 
 Important compatibility gap: TAN currently selects `EmailSender`, `EmailNoreplySender`, and custom senders, whereas the service configures one sender per application. Inventory actual sender use before cutover. Standardize on the configured TAN sender if acceptable; otherwise add a validated, application-scoped sender-profile feature before migrating affected flows. Do not silently discard sender overrides.
 
@@ -31,14 +31,14 @@ Important compatibility gap: TAN currently selects `EmailSender`, `EmailNoreplyS
 
 - Pin the reviewed notification-service revision before deployment; the present working tree contains substantial pending changes.
 - Add TAN options for base URL, application ID `tan-webservice`, secret, timeout and per-workflow transport selection. Store secrets outside source control.
-- Configure service template permissions, sender, recipient/attachment limits and raw-content/subject-override permissions. Prefer existing templates; allow raw HTML only for unmapped legacy content requiring exact parity.
+- Configure service template permissions, sender, recipient limits and raw-content/subject-override permissions. Prefer existing templates; allow raw HTML only for unmapped legacy content requiring exact parity.
 - Use `Authorization: ApiKey tan-webservice.<secret>`. Verify authentication, application isolation and maximum production report sizes using SMTP with a local mail capture server.
 
 ### 2. Add a direct HTTP client
 
-- Add an asynchronous `INotificationClient` implemented with a typed `HttpClient` in Infrastructure. Support attachment upload, email submission and lookup by idempotency key. Configure authentication, timeout and cancellation centrally.
+- Add an asynchronous `INotificationClient` implemented with a typed `HttpClient` in Infrastructure. Support email submission and lookup by idempotency key. Configure authentication, timeout and cancellation centrally.
 - Existing handlers and workers choose recipients and templates, then await the HTTP call. Use existing event identifiers to construct keys that distinguish workflow and audience; recurring notifications also need an event/version or report period.
-- For attachments, generate the report in TAN, upload it to `POST /api/v1/notifications/attachments`, and pass the returned ID to the email endpoint. Reuse the uploaded ID for related emails during that execution.
+- Workflows that currently attach generated reports cannot attach them through the service. Decide per workflow how the document is delivered (for example a link variable) before migrating it.
 - Treat HTTP 202 as durable acceptance by notification-service, not delivery. Log the returned notification ID, correlation ID and key without message bodies or secrets. No automatic TAN delivery-status polling is required; use the service API for investigation.
 - Make one HTTP attempt per upload or email submission. Disable automatic retry policies, including for connection failures, timeouts, 429 and server errors. Log validation/authentication failures and 409 responses without retrying them.
 - Log failures using the workflow, correlation ID, audience, idempotency key and safe HTTP/error details. Do not include bodies, passwords or API keys. A timeout can mean acceptance is unknown; record that uncertainty without resubmitting or automatically checking status.
@@ -57,7 +57,7 @@ Important compatibility gap: TAN currently selects `EmailSender`, `EmailNoreplyS
 | PDF to transporter | `weighbridge-ticket` | Receipt + transporter audience |
 
 - Preserve current year filter, settings, recipient fallback and report choice. Use deterministic polling order and prevent overlapping execution of the receipt worker.
-- Generate the PDF in TAN using existing SSRS credentials; upload it once and reuse its attachment ID for the two independent audience requests. Never serialize `MailMessage` or pass a process-local report stream to the remote service.
+- The PDF cannot be attached through the service. Agree how the two audiences receive the generated document before migrating this workflow. Never serialize `MailMessage` or pass a process-local report stream to the remote service.
 - Keep the existing receipt polling worker, but change its selection marker to mean “notification processing claimed”, not “email sent” or “all emails accepted”. Audit all readers of `WasTicketSentToTransporter` and rename/reuse the existing marker consistently; do not introduce a notification-intent table.
 - Persist the processing claim atomically before report upload or email submission. Only the worker that successfully claims the receipt processes it. If claim persistence fails, log and perform no notification calls. Leave the marker set after submission failures so later polling runs cannot retry those notifications. This deliberately means a crash after claiming can leave emails unsent; the marker is not proof of an HTTP attempt or delivery.
 - Return acceptance/failure from helper methods and log each outcome separately. Make at most one submission per applicable email, with separate keys for customer, timing, deviation, agent and transporter audiences. Continue independent emails after a failure; skip dependent ticket emails if PDF preparation/upload fails. Do not reset the processing marker on any email failure.
@@ -84,20 +84,19 @@ Migrate INPORT SMTP relay messages once sender/content parity is verified. Leave
 
 - Test receipt threshold boundaries (zero, equality, positive exceedance), timing boundaries, year eligibility, both external-storage report types, transporter fallback, missing configuration and separate agent/transporter recipients.
 - Test service unavailability, timeouts/lost responses, 429, server errors, changed-content 409 and partial receipt acceptance. Verify exactly one request attempt, safe failure logging, continued business processing and no resubmission on later worker runs. Verify atomic receipt claiming, no notification calls after a failed claim save, and no repeat after restarting a worker. Verify failed PDF upload skips dependent ticket submissions.
-- Test PDF/XLSX contents, limits, ownership and expiry. Upload near submission; preserve the accepted request's attachment identity. Expired attachments on accepted messages require an explicit remediation path, not a silently changed retry.
-- Verify template variables against `docs/domain-notification-templates.md`: all required variables are nonempty strings, ordinary values are HTML-encoded, and report templates require attachments.
+- Verify template variables against `docs/domain-notification-templates.md`: all required variables are nonempty strings, and ordinary values are HTML-encoded.
 - Exercise provider failure/retry and terminal status using isolated provider integration tests and then controlled test recipients. Inspect generated emails against current behavior.
-- Deploy the current service with exactly one replica, as required by its delivery design. Set attachment retention beyond backlog, downtime and retry duration; cleanup currently includes referenced uploads. Monitor Kafka/outbox lag separately because readiness checks only the database.
+- Deploy the current service with exactly one replica, as required by its delivery design. Monitor Kafka/outbox lag separately because readiness checks only the database.
 - Roll out per workflow. Never dual-send to real recipients. Rollback routes only new, unaccepted work to SMTP; reconcile uncertain acceptance by stable key/status first. Accepted messages remain owned by notification-service.
-- Monitor TAN submission errors, receipt notification processing failures, service delivery failures and attachment preparation errors. Provider acceptance (`Sent`) does not prove inbox delivery; a crash after provider acceptance can still duplicate mail.
+- Monitor TAN submission errors, receipt notification processing failures, and service delivery failures. Provider acceptance (`Sent`) does not prove inbox delivery; a crash after provider acceptance can still duplicate mail.
 
 ## Completion criteria
 
-All migrated workflows retain business triggers and recipient rules; accepted emails can be located by stable key and correlation ID; attachments and sender behavior match the agreed contract; TAN makes no automatic retries or later worker resubmissions; submission failures are logged and any recovery is explicitly manual; and no migrated path still sends SMTP or delegates email unexpectedly. Deferred external integrations are listed explicitly with their owner and remaining discovery work.
+All migrated workflows retain business triggers and recipient rules; accepted emails can be located by stable key and correlation ID; sender behavior and document delivery match the agreed contract; TAN makes no automatic retries or later worker resubmissions; submission failures are logged and any recovery is explicitly manual; and no migrated path still sends SMTP or delegates email unexpectedly. Deferred external integrations are listed explicitly with their owner and remaining discovery work.
 
 ## Source references
 
 - TAN: `Application/Interfaces/IEmailService.cs`, `Infrastructure/Services/EmailService.cs`, `Infrastructure/Services/ReceiptTransactionNotification.cs`, `API/Workers/SendReceiptTransactionJob.cs`, `API/Startup.cs`, `Infrastructure/Cbr/CbrService.cs`.
-- Notification service: `README.md`, `Api/Controllers/NotificationsController.cs`, `Api/Controllers/NotificationAttachmentsController.cs`, `Infrastructure/Notifications/Integration/NotificationApplications.cs`, `docs/domain-notification-templates.md`, `docs/notification-service-integration-report.md`.
+- Notification service: `README.md`, `Api/Controllers/NotificationsController.cs`, `Infrastructure/Notifications/Integration/NotificationApplications.cs`, `docs/domain-notification-templates.md`, `docs/notification-service-integration-report.md`.
 
 This is a source-based integration plan. No build, runtime connectivity, deployed configuration or delivery behavior was verified in this planning task.

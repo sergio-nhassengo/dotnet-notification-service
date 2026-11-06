@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Rail wagons deleted",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/RAN/DeleteRailOrderDetail.cs",
   "variables": {
     "orderNumber": {

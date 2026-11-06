@@ -6,13 +6,13 @@ Submit to `POST /api/v1/notifications/email` with `Authorization: ApiKey tan-web
 
 All documented variables are required nonempty strings. Use plain text; HTML is encoded. For lists, provide one complete record per line; the HTML layout preserves line breaks. Use `None` for empty result lists and `Not applicable` for unavailable contextual fields. Format dates with a timezone and masses in the indicated units. Never fabricate identifiers. URL fields are displayed as text, not interpolated into HTML attributes.
 
-For required attachments, generate the document in TAN, upload it to `/api/v1/notifications/attachments`, then pass `attachments: [{ "attachmentId": "<returned UUID>" }]`. Inline logos do not satisfy this requirement. Keep attachment IDs and the full request stable on retries.
+The service does not send attachments. `weighbridge-ticket`, `weighbridge-transactions-report`, `data-integrity-report` and `tan-trips-history-report` were written for an attached document; until their wording is revised, TAN must deliver those documents another way (for example a link variable).
 
 ## Workflow notes
 
 - Receipt completion, weighing-time discrepancy and nett deviation are separate notifications. Keep the positive customer threshold and strict greater-than comparison in TAN.
 - `weighbridge-ticket` covers both agent and transporter delivery. TAN must choose the external-storage PDF for Transfer To Port and Transfer To Vessel; templates do not generate reports or select recipients.
-- `data-integrity-report` requires an attachment; `tan-data-integrity-report-link` covers the existing report-link path for parcel, receipt, shipping and rail scopes.
+- `data-integrity-report` was written for an attached report; `tan-data-integrity-report-link` covers the existing report-link path for parcel, receipt, shipping and rail scopes.
 - `tan-operational-failure` covers worker, SFTP, bank authentication/payment submission, Gate One, KM4, cleanup, import-notification and report-delivery failures. Use `tan-sew-integration-failed` for SEW operation errors and `tan-sew-response-errors` for returned business validation errors. Send safe failure summaries rather than credentials or full exception dumps.
 - Account templates preserve the existing initial/reset-password workflow. Password values are sensitive and are persisted with notification variables; do not log them or use real passwords in examples.
 - CBR submission/resubmission/closure currently delegates to INPORT. `tan-cbr-status-notification` is prepared for a future explicit integration; it does not reproduce unseen INPORT email logic.
@@ -22,45 +22,45 @@ For required attachments, generate the document in TAN, upload it to `/api/v1/no
 
 ## Catalogue
 
-| Template | Attachment required |
-|---|---|
-| `rail-consignment-alert` | No |
-| `tan-tip-generated` | No |
-| `tan-tip-payment-submitted` | No |
-| `tan-tip-payment-confirmed` | No |
-| `tan-tip-payment-failed` | No |
-| `tan-truck-release-requested` | No |
-| `tan-cbr-vessel-change-requested` | No |
-| `tan-sew-integration-failed` | No |
-| `weighbridge-ticket` | Yes |
-| `weighbridge-transactions-report` | Yes |
-| `data-integrity-report` | Yes |
-| `tan-trips-history-report` | Yes |
-| `tan-receipt-completed` | No |
-| `tan-receipt-time-discrepancy` | No |
-| `tan-receipt-nett-deviation` | No |
-| `tan-data-integrity-report-link` | No |
-| `tan-agent-allocation` | No |
-| `tan-driver-details` | No |
-| `tan-border-arrival-driver-conflict` | No |
-| `tan-truck-details-missing` | No |
-| `tan-sew-trucks-uploaded` | No |
-| `tan-tip-batch-generated` | No |
-| `tan-duplicate-declarations` | No |
-| `tan-duplicate-payment-references` | No |
-| `tan-sew-response-errors` | No |
-| `tan-import-result` | No |
-| `tan-operational-failure` | No |
-| `tan-wagons-submitted` | No |
-| `tan-wagons-updated` | No |
-| `tan-wagons-deleted` | No |
-| `tan-account-created` | No |
-| `tan-account-reset` | No |
-| `tan-agent-account-notification` | No |
-| `tan-cbr-status-notification` | No |
-| `tan-truck-release-operations-review` | No |
-| `tan-message` | No |
-| `payment-confirmed` | No |
+| Template |
+|---|
+| `rail-consignment-alert` |
+| `tan-tip-generated` |
+| `tan-tip-payment-submitted` |
+| `tan-tip-payment-confirmed` |
+| `tan-tip-payment-failed` |
+| `tan-truck-release-requested` |
+| `tan-cbr-vessel-change-requested` |
+| `tan-sew-integration-failed` |
+| `weighbridge-ticket` |
+| `weighbridge-transactions-report` |
+| `data-integrity-report` |
+| `tan-trips-history-report` |
+| `tan-receipt-completed` |
+| `tan-receipt-time-discrepancy` |
+| `tan-receipt-nett-deviation` |
+| `tan-data-integrity-report-link` |
+| `tan-agent-allocation` |
+| `tan-driver-details` |
+| `tan-border-arrival-driver-conflict` |
+| `tan-truck-details-missing` |
+| `tan-sew-trucks-uploaded` |
+| `tan-tip-batch-generated` |
+| `tan-duplicate-declarations` |
+| `tan-duplicate-payment-references` |
+| `tan-sew-response-errors` |
+| `tan-import-result` |
+| `tan-operational-failure` |
+| `tan-wagons-submitted` |
+| `tan-wagons-updated` |
+| `tan-wagons-deleted` |
+| `tan-account-created` |
+| `tan-account-reset` |
+| `tan-agent-account-notification` |
+| `tan-cbr-status-notification` |
+| `tan-truck-release-operations-review` |
+| `tan-message` |
+| `payment-confirmed` |
 
 ## rail-consignment-alert
 
@@ -613,6 +613,6 @@ Source: `weighbridge-tan-webservice/Infrastructure/Services/TipNotificationServi
 
 ## tan-truck-release-operations-review
 
-Operations-only version of `tan-truck-release-requested`. Uses the same variables plus required `tallyUrl` (the Operations review address, displayed as text). No attachment required. The truck remains blocked pending an Operations decision.
+Operations-only version of `tan-truck-release-requested`. Uses the same variables plus required `tallyUrl` (the Operations review address, displayed as text). The truck remains blocked pending an Operations decision.
 
 Source: `weighbridge-tan-webservice/Application/Transactions/ReleaseTruckTransaction.cs`.

@@ -12,7 +12,6 @@ services:
       ConnectionStrings__Logging: ${LOGGING_DB_CONNECTION_STRING:-}
       Kafka__BootstrapServers: ${KAFKA_BOOTSTRAP_SERVERS:-kafka-1:9092,kafka-2:9092,kafka-3:9092}
       EmailProvider__Provider: ${EMAIL_PROVIDER:-SmtpRelay}
-      NotificationAttachments__RetentionDays: ${ATTACHMENT_RETENTION_DAYS:-7}
       SmtpRelay__Username: ${SMTP_RELAY_USERNAME:-}
       SmtpRelay__Password: ${SMTP_RELAY_PASSWORD:-}
       SmtpRelay__CreatedBy: ${SMTP_RELAY_CREATED_BY:-}

@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "TAN allocated to your agency",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/Tan/ChangeTanAgent.cs",
   "variables": {
     "tanId": {

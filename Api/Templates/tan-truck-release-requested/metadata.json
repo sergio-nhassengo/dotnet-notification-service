@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Tan truck release requested",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/Transactions/ReleaseTruckTransaction.cs",
   "variables": {
     "registrationNumber": {

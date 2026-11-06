@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Rail wagons submitted",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/RAN/SubmitWagons.cs",
   "variables": {
     "orderNumber": {

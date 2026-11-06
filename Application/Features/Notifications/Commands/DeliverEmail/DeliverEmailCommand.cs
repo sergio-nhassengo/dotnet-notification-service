@@ -103,23 +103,11 @@ public sealed class DeliverEmailCommandHandler(IApplicationDbContext db, IEmailP
         var rendered = content.HtmlBody is not null || content.TextBody is not null
             ? new RenderedEmail(n.Subject!, content.HtmlBody ?? "", content.TextBody ?? "")
             : await renderer.RenderAsync(n.TemplateId, variables, ct);
-        if (content.Attachments.Count(x => x.ContentId is null) < rendered.MinimumAttachments)
-            throw new TemplateException("This template requires a document attachment.");
-        var ids = content.Attachments.Select(x => x.AttachmentId).ToArray();
-        var stored = await db.NotificationAttachments.AsNoTracking()
-            .Where(x => x.ApplicationId == n.ApplicationId && ids.Contains(x.Id)).ToListAsync(ct);
-        if (stored.Count != ids.Length)
-            throw new TemplateException("A required attachment is unavailable.");
         return new EmailMessage(n.MessageId, content.To[0].Email, content.To[0].Name,
             n.SenderEmail, n.SenderName, n.Subject ?? rendered.Subject, rendered.HtmlBody, rendered.TextBody)
         {
             To = content.To,
-            Cc = content.Cc,
-            Attachments = content.Attachments.Select(reference =>
-            {
-                var file = stored.Single(x => x.Id == reference.AttachmentId);
-                return new DeliveryAttachment(file.FileName, file.ContentType, file.Content, reference.ContentId);
-            }).ToArray()
+            Cc = content.Cc
         };
     }
 }

@@ -80,9 +80,8 @@ public sealed class NotificationMigrationTests
         Assert.Equal(Now, stored.LastAttemptAt);
         Assert.Equal(stored.CreatedAt, stored.NextAttemptAt);
         Assert.Equal("{\"durable\":true}", (await db.OutboxMessages.SingleAsync()).Payload);
-        Assert.Equal(new byte[] { 1, 2 }, (await db.NotificationAttachments.SingleAsync()).Content);
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN ('InboxMessages', 'NotificationDeliveryAttempts', 'NotificationReplays', 'Users', 'Roles')";
+        command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN ('InboxMessages', 'NotificationDeliveryAttempts', 'NotificationReplays', 'Users', 'Roles', 'NotificationAttachments')";
         Assert.Equal(0L, await command.ExecuteScalarAsync());
         command.CommandText = "SELECT COUNT(*) FROM pragma_table_info('EmailNotifications') WHERE name IN ('RecipientEmail', 'RecipientName', 'BusinessReference')";
         Assert.Equal(0L, await command.ExecuteScalarAsync());

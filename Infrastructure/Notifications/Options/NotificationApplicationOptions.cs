@@ -12,6 +12,4 @@ public sealed class NotificationApplicationOptions
     public bool AllowRawContent { get; set; }
     public bool AllowSubjectOverride { get; set; }
     public int MaximumRecipients { get; set; } = 50;
-    public int MaximumAttachments { get; set; } = 5;
-    public long MaximumAttachmentBytes { get; set; } = 5 * 1024 * 1024;
 }

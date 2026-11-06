@@ -12,7 +12,7 @@ public sealed class NotificationApplications(IOptions<NotificationIntegrationOpt
         if (string.IsNullOrEmpty(id)) return null;
         if (!integration.Value.Applications.TryGetValue(id, out var app) || !app.Enabled) return null;
         return new(id, app.SenderEmail, app.SenderName, app.AllowedTemplateIds,
-            app.AllowRawContent, app.AllowSubjectOverride, app.MaximumRecipients, app.MaximumAttachments, app.MaximumAttachmentBytes);
+            app.AllowRawContent, app.AllowSubjectOverride, app.MaximumRecipients);
     }
 }
 

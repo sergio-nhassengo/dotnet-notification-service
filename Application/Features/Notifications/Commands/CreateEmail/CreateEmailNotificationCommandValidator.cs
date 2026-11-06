@@ -16,7 +16,6 @@ public sealed class CreateEmailNotificationCommandValidator : AbstractValidator<
             .WithMessage("Provide either recipient or a nonempty to collection.");
         RuleFor(x => x.To).NotNull(); 
         RuleFor(x => x.Cc).NotNull(); 
-        RuleFor(x => x.Attachments).NotNull();
         RuleFor(x => x).Custom((x, ctx) =>
         {
             var recipients = (x.To ?? []).Concat(x.Cc ?? []).ToList();
@@ -25,14 +24,6 @@ public sealed class CreateEmailNotificationCommandValidator : AbstractValidator<
             if (recipients.Any(r => r is null || !ValidEmail(r.Email) || r.Name?.Length > 200 || r.Name?.IndexOfAny(['\r', '\n']) >= 0))
                 ctx.AddFailure("Recipients", "Recipients must contain individual valid email addresses and valid display names.");
             if (recipients.Count > 100) ctx.AddFailure("Recipients", "At most 100 recipients are supported.");
-            if (x.Attachments?.Any(a => a is null || a.AttachmentId == Guid.Empty ||
-                a.ContentId is not null && !System.Text.RegularExpressions.Regex.IsMatch(a.ContentId, "^[a-zA-Z0-9_.-]{1,100}$")) == true)
-                ctx.AddFailure("Attachments", "Attachment references or content IDs are invalid.");
-            if (x.Attachments is not null && (x.Attachments.Select(a => a?.AttachmentId).Distinct().Count() != x.Attachments.Count || x.Attachments
-                    .Where(a => a?.ContentId is not null).
-                    Select(a => a.ContentId)
-                    .Distinct().Count() != x.Attachments.Count(a => a?.ContentId is not null)))
-                ctx.AddFailure("Attachments", "Duplicate attachment references or content IDs are not allowed.");
             var raw = x.HtmlBody is not null || x.TextBody is not null;
             if (raw)
             {

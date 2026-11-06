@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "TAN operation failed",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/API/Workers; weighbridge-tan-webservice/Infrastructure/Services/GateOneService.cs; weighbridge-tan-webservice/Infrastructure/Services/Sftp/SftpService.cs; weighbridge-tan-webservice/Infrastructure/Services/DeleteLocalFile/DeleteLocalFileService.cs; weighbridge-tan-webservice/Infrastructure/Services/Km4and7/Km4And7ProcessService.cs; weighbridge-tan-webservice/Infrastructure/Services/StandardBank/StandardBankIntegratorService.cs",
   "variables": {
     "operation": {

@@ -1,8 +1,6 @@
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
-using System.Text;
 using Application.Features.Notifications.Commands.CreateEmail;
 using Application.Notifications.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,13 +10,11 @@ namespace Api.IntegrationTests;
 public sealed class DomainTemplateIntegrationTests
 {
     [Fact]
-    public async Task All_TAN_templates_are_accepted_with_their_required_attachments()
+    public async Task All_TAN_templates_are_accepted()
     {
         await using var factory = new NotificationSqliteFactory();
         var applicationIds = new[] { "tan-webservice" };
         var clients = applicationIds.ToDictionary(id => id, factory.Client);
-        var attachments = new Dictionary<string, Guid>();
-        foreach (var id in applicationIds) attachments[id] = await UploadDocument(clients[id]);
         var files = Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "Templates"), "metadata.json", SearchOption.AllDirectories);
         Assert.Equal(37, files.Length);
         var applications = factory.Services.GetRequiredService<INotificationApplications>();
@@ -34,7 +30,6 @@ public sealed class DomainTemplateIntegrationTests
                 .ToDictionary(x => x.Name, x => x.Value.GetProperty("example").GetString()!);
             var allowed = metadata.RootElement.GetProperty("applications").EnumerateArray().Select(x => x.GetString()).ToArray();
             Assert.Equal(new[] { "tan-webservice" }, allowed);
-            var requiresAttachment = metadata.RootElement.GetProperty("minimumAttachments").GetInt32() > 0;
             foreach (var app in applicationIds)
             {
                 var request = new CreateEmailNotificationCommand($"{app}:{templateId}", "template-verification", new("recipient@example.com", null),
@@ -45,27 +40,10 @@ public sealed class DomainTemplateIntegrationTests
                     Assert.Equal(HttpStatusCode.Forbidden, (await clients[app].PostAsJsonAsync("/api/v1/notifications/email", request)).StatusCode);
                     continue;
                 }
-                if (requiresAttachment)
-                {
-                    Assert.Equal(HttpStatusCode.BadRequest, (await clients[app].PostAsJsonAsync("/api/v1/notifications/email", request)).StatusCode);
-                    var logoOnly = request with { Attachments = [new(attachments[app], "logo")] };
-                    Assert.Equal(HttpStatusCode.BadRequest, (await clients[app].PostAsJsonAsync("/api/v1/notifications/email", logoOnly)).StatusCode);
-                    request = request with { Attachments = [new(attachments[app])] };
-                }
                 var response = await clients[app].PostAsJsonAsync("/api/v1/notifications/email", request);
                 Assert.True(response.StatusCode == HttpStatusCode.Accepted, $"{app}/{templateId}: {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             }
         }
     }
 
-    private static async Task<Guid> UploadDocument(HttpClient client)
-    {
-        using var form = new MultipartFormDataContent();
-        var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes("%PDF-domain-template-test"));
-        bytes.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
-        form.Add(bytes, "file", "report.pdf");
-        var response = await client.PostAsync("/api/v1/notifications/attachments", form);
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("attachmentId").GetGuid();
-    }
 }

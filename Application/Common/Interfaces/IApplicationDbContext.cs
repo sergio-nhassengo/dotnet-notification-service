@@ -9,8 +9,6 @@ public interface IApplicationDbContext
 {
     Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade Database { get; }
 
-    DbSet<NotificationAttachment> NotificationAttachments { get; }
-
     DbSet<EmailNotification> EmailNotifications { get; }
     DbSet<OutboxMessage> OutboxMessages { get; }
 

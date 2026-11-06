@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Truck driver details",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/TanService.cs",
   "variables": {
     "tanId": {

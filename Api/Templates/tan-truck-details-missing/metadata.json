@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Truck details missing for TIP generation",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/SewTanUploaderService.cs",
   "variables": {
     "registrationNumber": {

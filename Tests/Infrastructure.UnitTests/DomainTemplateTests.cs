@@ -30,7 +30,6 @@ public sealed class DomainTemplateTests
             Assert.InRange(rendered.Subject.Length, 1, 200);
             Assert.DoesNotContain('\n', rendered.Subject);
             Assert.Contains("<html lang=\"en\">", rendered.HtmlBody);
-            Assert.Equal(metadata.RootElement.GetProperty("minimumAttachments").GetInt32(), rendered.MinimumAttachments);
             foreach (var value in variables.Values) Assert.Contains(value, rendered.TextBody);
             // Every declared variable really is required, including body-only fields.
             foreach (var key in variables.Keys)
@@ -77,7 +76,6 @@ public sealed class DomainTemplateTests
         var rendered = await Renderer().RenderAsync("payment-confirmed", new Dictionary<string, string>
         { ["customerName"] = "Ada", ["paymentReference"] = "PAY-1" }, default);
         Assert.Equal("Payment PAY-1 confirmed", rendered.Subject);
-        Assert.Equal(0, rendered.MinimumAttachments);
     }
 
     private static FileEmailTemplateRenderer Renderer()

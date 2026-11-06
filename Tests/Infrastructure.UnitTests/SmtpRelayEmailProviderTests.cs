@@ -89,14 +89,6 @@ public sealed class SmtpRelayEmailProviderTests
     }
 
     [Fact]
-    public async Task Attachments_are_rejected_before_login()
-    {
-        var handler = new Handler((_, _) => throw new InvalidOperationException("Unexpected HTTP request"));
-        var result = await Provider(handler).SendAsync(Message() with { Attachments = [new("a.txt", "text/plain", [1], null)] }, default);
-        Assert.Equal("SmtpRelay.AttachmentsUnsupported", result.ErrorCode);
-    }
-
-    [Fact]
     public async Task Caller_cancellation_is_propagated()
     {
         using var cancellation = new CancellationTokenSource();

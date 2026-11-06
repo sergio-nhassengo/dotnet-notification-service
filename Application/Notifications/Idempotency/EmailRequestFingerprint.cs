@@ -16,7 +16,16 @@ public static class EmailRequestFingerprint
             request.TemplateId,
             Variables = request.Variables.OrderBy(x => x.Key, StringComparer.Ordinal).ToArray(),
             request.Subject,
-            request.Content
+            // Attachments were removed, but stored hashes include an empty "attachments" array at this
+            // position. Keep emitting it so existing fingerprints still match.
+            Content = new
+            {
+                request.Content.To,
+                request.Content.Cc,
+                Attachments = Array.Empty<object>(),
+                request.Content.HtmlBody,
+                request.Content.TextBody
+            }
         }))));
 
     public static bool Matches(EmailNotification existing, string idempotencyKey, EmailRequestSnapshot request)

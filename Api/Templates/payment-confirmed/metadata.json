@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Payment confirmed",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs",
   "variables": {
     "customerName": {

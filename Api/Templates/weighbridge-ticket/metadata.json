@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Weighbridge ticket",
-  "minimumAttachments": 1,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/ReceiptTransactionNotification.cs",
   "variables": {
     "ticketId": {

@@ -9,8 +9,6 @@ namespace Persistence;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : DbContext(options), IApplicationDbContext
 {
-    public DbSet<NotificationAttachment> NotificationAttachments => Set<NotificationAttachment>();
-
     public DbSet<EmailNotification> EmailNotifications => Set<EmailNotification>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 

@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Agent account notification",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/User/NotifyAgentAccounts.cs",
   "variables": {
     "fullName": {

@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Rail wagons updated",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/RAN/UpdateRailOrderDetail.cs",
   "variables": {
     "orderNumber": {

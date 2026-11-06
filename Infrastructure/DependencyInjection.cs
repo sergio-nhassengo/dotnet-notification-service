@@ -45,7 +45,6 @@ public static class DependencyInjection
         services.AddOptions<EmailProviderOptions>().Bind(configuration.GetSection(EmailProviderOptions.SectionName)).ValidateDataAnnotations().ValidateOnStart();
         services.AddSingleton<IValidateOptions<EmailProviderOptions>, EmailProviderOptionsValidator>();
         services.AddOptions<TemplateOptions>().Bind(configuration.GetSection(TemplateOptions.SectionName)).ValidateDataAnnotations().ValidateOnStart();
-        services.AddOptions<NotificationAttachmentOptions>().Bind(configuration.GetSection(NotificationAttachmentOptions.SectionName)).ValidateDataAnnotations().ValidateOnStart();
         services.AddOptions<NotificationIntegrationOptions>().Bind(configuration.GetSection("NotificationIntegration")).ValidateOnStart();
         services.AddSingleton<IValidateOptions<NotificationIntegrationOptions>, NotificationIntegrationOptionsValidator>();
         return services;
@@ -125,7 +124,6 @@ public static class DependencyInjection
 
     private static IServiceCollection AddNotificationWorkers(this IServiceCollection services)
     {
-        services.AddHostedService<AttachmentCleanupWorker>();
         services.AddHostedService<EmailDeliveryWorker>();
         services.AddHostedService<OutboxCleanupWorker>();
         return services;

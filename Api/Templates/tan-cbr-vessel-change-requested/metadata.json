@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Tan cbr vessel change requested",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/CBR/UpdateCBRVessel/UpdateCBRVessel.cs",
   "variables": {
     "cbrId": {

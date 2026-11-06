@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Tan tip generated",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs",
   "variables": {
     "registrationNumber": {

@@ -19,13 +19,12 @@ public sealed record CreateEmailNotificationCommand(string IdempotencyKey, strin
 {
     public IReadOnlyList<EmailAddress> To { get; init; } = [];
     public IReadOnlyList<EmailAddress> Cc { get; init; } = [];
-    public IReadOnlyList<EmailAttachmentReference> Attachments { get; init; } = [];
     public string? HtmlBody { get; init; }
     public string? TextBody { get; init; }
     public EmailContent Content() => new()
     {
         To = Recipient is not null ? [new(Recipient.Email, Recipient.Name)] : To,
-        Cc = Cc, Attachments = Attachments, HtmlBody = HtmlBody, TextBody = TextBody
+        Cc = Cc, HtmlBody = HtmlBody, TextBody = TextBody
     };
     public EmailRequestSnapshot ToSnapshot() => new(CorrelationId, TemplateId ?? "",
         Variables ?? new Dictionary<string, string>(), Subject, Content());

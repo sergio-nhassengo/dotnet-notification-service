@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Weighbridge transactions report",
-  "minimumAttachments": 1,
   "source": "weighbridge-tan-webservice/API/Workers/SendTicketToAgentsAndCustomersJob.cs",
   "variables": {
     "orderNumber": {

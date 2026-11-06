@@ -51,14 +51,7 @@ public sealed class SmtpEmailProvider(IOptions<SmtpOptions> options) : IEmailPro
             message.CC.Add(new MailAddress(recipient.Email, recipient.Name));
         message.Headers.Add("X-Notification-Id", email.MessageId.ToString());
         message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(email.TextBody, System.Text.Encoding.UTF8, MediaTypeNames.Text.Plain));
-        var html = AlternateView.CreateAlternateViewFromString(email.HtmlBody, System.Text.Encoding.UTF8, MediaTypeNames.Text.Html);
-        message.AlternateViews.Add(html);
-        foreach (var file in email.Attachments)
-        {
-            if (file.ContentId is not null)
-                html.LinkedResources.Add(new LinkedResource(new MemoryStream(file.Content), file.ContentType) { ContentId = file.ContentId, TransferEncoding = TransferEncoding.Base64 });
-            else message.Attachments.Add(new Attachment(new MemoryStream(file.Content), file.FileName, file.ContentType));
-        }
+        message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(email.HtmlBody, System.Text.Encoding.UTF8, MediaTypeNames.Text.Html));
         return message;
     }
 }

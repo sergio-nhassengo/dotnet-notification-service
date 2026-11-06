@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Duplicate payment references",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/API/Workers/SewSFTP/SewDeclarationWorker.cs; weighbridge-tan-webservice/Application/Sew/Payments/PostSewIntegrationPayment.cs",
   "variables": {
     "sourceReference": {

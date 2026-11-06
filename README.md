@@ -2,7 +2,7 @@
 
 A .NET 10 email service with REST submission, application API keys, EF Core persistence, an outbox, and Kafka as an internal transport. Run exactly one service replica.
 
-An authenticated POST validates the application's permissions, recipients, content, templates and attachments. It saves a `Pending` email and its Kafka outbox message together in one database transaction. The publisher forwards durable outbox messages to Kafka and marks them processed only after broker acknowledgement.
+An authenticated POST validates the application's permissions, recipients, content and templates. It saves a `Pending` email and its Kafka outbox message together in one database transaction. The publisher forwards durable outbox messages to Kafka and marks them processed only after broker acknowledgement.
 
 The consumer accepts only events matching a durable REST-created email by `MessageId`, `ApplicationId`, `IdempotencyKey` and `RequestHash`. It changes `Pending` to `Queued`; an already accepted state is a duplicate. Database persistence must succeed before the source offset is committed. A failed save or commit retries the same record before consuming another. Unknown or mismatched events produce a durable dead-letter outbox message; direct Kafka submission is unsupported.
 
@@ -21,7 +21,6 @@ Send `Authorization: ApiKey <application-id>.<secret>`. Configure the SHA-256 he
 | `POST /api/v1/notifications/email` | Accept an email; returns 202 and a status URL |
 | `GET /api/v1/notifications/{notificationId}` | Read current delivery state |
 | `GET /api/v1/notifications` | Search by correlation ID or idempotency key |
-| `POST /api/v1/notifications/attachments` | Upload a multipart `file`, returning an attachment ID |
 | `GET /health/live` | Process liveness |
 | `GET /health/ready` | Database readiness |
 | `GET /swagger` | Interactive API documentation |
@@ -36,19 +35,9 @@ Send `Authorization: ApiKey <application-id>.<secret>`. Configure the SHA-256 he
 }
 ```
 
-Use a new idempotency key for each independent notification. Repeating an identical request returns the same IDs; changing its content with the same application/key returns 409. Both `MessageId` and `(ApplicationId, IdempotencyKey)` have unique database indexes. The original single `recipient` form is also accepted; use either `recipient` or `to`. Raw content uses `subject` and `htmlBody` and/or `textBody` instead of a template. `cc` and `attachments` are optional arrays.
+Use a new idempotency key for each independent notification. Repeating an identical request returns the same IDs; changing its content with the same application/key returns 409. Both `MessageId` and `(ApplicationId, IdempotencyKey)` have unique database indexes. The original single `recipient` form is also accepted; use either `recipient` or `to`. Raw content uses `subject` and `htmlBody` and/or `textBody` instead of a template. `cc` is an optional array. Attachments are not supported.
 
-Templates are unversioned directories under `Api/Templates`. Templates are scoped exclusively to `tan-webservice`. See the [domain template catalogue](docs/domain-notification-templates.md) for the other templates. Files are copied into build and publish output. SMTP supports inline attachments with `contentId`. SmtpRelay currently rejects attachments.
-
-## Attachments
-
-Attachments remain in the database until expiry. The single cleanup worker deletes uploads older than the configured retention period, once per hour:
-
-```json
-"NotificationAttachments": { "RetentionDays": 7 }
-```
-
-Attachments must remain available until the email is delivered. Set retention longer than the maximum expected retry duration, including provider retry delays, broker downtime and delivery backlog. Cleanup is based on upload age and includes referenced files; an expired file causes delivery to fail. Upload close to submission and choose retention accordingly. No external file store is needed.
+Templates are unversioned directories under `Api/Templates`. Templates are scoped exclusively to `tan-webservice`. See the [domain template catalogue](docs/domain-notification-templates.md) for the other templates. Files are copied into build and publish output.
 
 ## Run locally
 
@@ -60,7 +49,7 @@ dotnet build MPDCApiTemplate.sln
 dotnet run --project Api
 ```
 
-Development startup calls `Database.MigrateAsync()`. The new migration upgrades the previous development SQLite schema, including files without migration metadata, without deleting notification, outbox or attachment records. Back up an existing file before upgrading. SQLite keeps its existing binary timestamp representation. Historical SQL Server migrations are bypassed for SQLite; the new migration supplies its compatible schema and upgrade. The shared snapshot is generated for SQL Server, so SQLite's expected provider model difference is explicitly excluded from the pending-model warning. SQLite rollback across this migration requires restoring a backup.
+Development startup calls `Database.MigrateAsync()`. The new migration upgrades the previous development SQLite schema, including files without migration metadata, without deleting notification or outbox records. The `RemoveNotificationAttachments` migration drops the attachments table and its stored files. Back up an existing file before upgrading. SQLite keeps its existing binary timestamp representation. Historical SQL Server migrations are bypassed for SQLite; the new migration supplies its compatible schema and upgrade. The shared snapshot is generated for SQL Server, so SQLite's expected provider model difference is explicitly excluded from the pending-model warning. SQLite rollback across this migration requires restoring a backup.
 
 Production schema changes should run as a deployment step, before starting the service:
 

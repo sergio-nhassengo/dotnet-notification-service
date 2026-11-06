@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using Application.Notifications.Abstractions;
 using Application.Notifications.Models;
@@ -46,24 +45,8 @@ public sealed partial class FileEmailTemplateRenderer(IOptions<TemplateOptions> 
         subject = Placeholder().Replace(subject, match => variables[match.Groups[1].Value]);
         html = Placeholder().Replace(html, match => WebUtility.HtmlEncode(variables[match.Groups[1].Value]));
         text = Placeholder().Replace(text, match => variables[match.Groups[1].Value]);
-        var minimumAttachments = 0;
-        var requirementsPath = Path.Combine(folder, "metadata.json");
-        
-        if (File.Exists(requirementsPath))
-        {
-            try
-            {
-                var metadata = JsonSerializer.Deserialize<TemplateMetadata>(await File.ReadAllTextAsync(requirementsPath, ct),
-                    new JsonSerializerOptions(JsonSerializerDefaults.Web));
-                if (metadata is null || metadata.MinimumAttachments is < 0 or > 10)
-                    throw new TemplateException("Template attachment requirements are invalid.");
-                minimumAttachments = metadata.MinimumAttachments;
-            }
-            catch (JsonException) { throw new TemplateException("Template metadata is invalid."); }
-        }
-        return new RenderedEmail(subject.Trim(), html, text) { MinimumAttachments = minimumAttachments };
+        return new RenderedEmail(subject.Trim(), html, text);
     }
-    private sealed record TemplateMetadata(int MinimumAttachments);
 
     [GeneratedRegex("^[a-z0-9][a-z0-9-]{0,99}$")]
     private static partial Regex SafeId();

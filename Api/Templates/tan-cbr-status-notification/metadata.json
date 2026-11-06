@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Cargo booking status notification",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/EmailService.cs; weighbridge-tan-webservice/Infrastructure/Cbr/CbrService.cs",
   "variables": {
     "cbrId": {

@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Receipt weighing time discrepancy",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/ReceiptTransactionNotification.cs",
   "variables": {
     "transactionId": {

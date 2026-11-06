@@ -125,41 +125,6 @@ namespace Persistence.Migrations
                     b.ToTable("EmailNotifications", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.NotificationAttachment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ApplicationId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<byte[]>("Content")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApplicationId", "CreatedAt");
-
-                    b.ToTable("NotificationAttachments", (string)null);
-                });
-
             modelBuilder.Entity("Domain.Entities.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")

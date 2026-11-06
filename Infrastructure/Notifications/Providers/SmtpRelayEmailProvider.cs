@@ -19,9 +19,6 @@ public sealed class SmtpRelayEmailProvider(HttpClient client, IOptions<SmtpRelay
         var settings = options.Value;
         if (!settings.IsValid())
             return EmailProviderResult.Failure(EmailFailureCategory.Configuration, "SmtpRelay.Configuration", "SMTP relay configuration is invalid.");
-        // The supplied relay contract only defines an empty attachment array.
-        if (message.Attachments.Count > 0)
-            return EmailProviderResult.Failure(EmailFailureCategory.Permanent, "SmtpRelay.AttachmentsUnsupported", "SMTP relay attachment format is not configured.");
         try
         {
             using var login = await client.PostAsJsonAsync("login", new { username = settings.Username, password = settings.Password }, ct);
@@ -47,6 +44,7 @@ public sealed class SmtpRelayEmailProvider(HttpClient client, IOptions<SmtpRelay
                     text = message.TextBody,
                     html = message.HtmlBody,
                     createdBy = settings.CreatedBy,
+                    // The relay contract requires an attachments array; this service never sends attachments.
                     attachments = Array.Empty<object>()
                 })
             };

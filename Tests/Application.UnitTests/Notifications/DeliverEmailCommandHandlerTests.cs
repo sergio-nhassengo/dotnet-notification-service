@@ -109,23 +109,6 @@ public sealed class DeliverEmailCommandHandlerTests : IDisposable
     }
 
     [Fact]
-    public async Task Missing_attachment_fails_permanently_without_calling_the_provider()
-    {
-        var n = await AddQueuedAsync(new EmailContent
-        {
-            To = [new EmailAddress("to@example.com")],
-            Attachments = [new EmailAttachmentReference(Guid.NewGuid())]
-        });
-
-        await Handle(n);
-
-        Assert.Equal(NotificationStatus.DeadLettered, n.Status);
-        Assert.Equal("Template.Invalid", n.LastErrorCode);
-        Assert.Null(n.LastAttemptAt);
-        await _provider.DidNotReceiveWithAnyArgs().SendAsync(default!, default);
-    }
-
-    [Fact]
     public async Task Email_that_is_no_longer_due_is_left_unchanged()
     {
         var n = await AddQueuedAsync();

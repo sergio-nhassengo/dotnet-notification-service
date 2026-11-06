@@ -53,29 +53,6 @@ public sealed class NotificationIntegrationTests
     }
 
     [Fact]
-    public async Task Attachments_are_durable_and_cannot_be_used_by_another_application()
-    {
-        await using var factory = new NotificationSqliteFactory();
-        var otc = factory.Client("otc-api"); var tan = factory.Client("tan-webservice");
-        using var form = new MultipartFormDataContent();
-        var bytes = new ByteArrayContent(Encoding.UTF8.GetBytes("%PDF-test"));
-        bytes.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
-        form.Add(bytes, "file", "ticket.pdf");
-        var upload = await otc.PostAsync("/api/v1/notifications/attachments", form);
-        Assert.Equal(HttpStatusCode.Created, upload.StatusCode);
-        var id = (await upload.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("attachmentId").GetGuid();
-        var request = Raw("attachment-key") with { Attachments = [new(id)] };
-        Assert.Equal(HttpStatusCode.BadRequest, (await tan.PostAsJsonAsync("/api/v1/notifications/email", request)).StatusCode);
-        Assert.Equal(HttpStatusCode.Accepted, (await otc.PostAsJsonAsync("/api/v1/notifications/email", request)).StatusCode);
-        using var scope = factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        Assert.Equal("%PDF-test", Encoding.UTF8.GetString((await db.NotificationAttachments.SingleAsync()).Content));
-        var notification = await db.EmailNotifications.SingleAsync();
-        Assert.Contains(id.ToString(), notification.ContentJson);
-        Assert.Equal(2, JsonSerializer.Deserialize<Application.Notifications.Models.EmailContent>(notification.ContentJson!)!.To.Count);
-    }
-
-    [Fact]
     public async Task Invalid_content_templates_and_credentials_are_rejected_before_acceptance()
     {
         await using var factory = new NotificationSqliteFactory();
@@ -260,7 +237,7 @@ internal sealed class NotificationSqliteFactory(bool useKafka = false, Microsoft
                 options.UseSqlite(connection);
                 if (interceptor is not null) options.AddInterceptors(interceptor);
             });
-            var workers = new[] { typeof(EmailDeliveryWorker), typeof(OutboxPublisherWorker), typeof(KafkaEmailConsumerWorker), typeof(OutboxCleanupWorker), typeof(AttachmentCleanupWorker) };
+            var workers = new[] { typeof(EmailDeliveryWorker), typeof(OutboxPublisherWorker), typeof(KafkaEmailConsumerWorker), typeof(OutboxCleanupWorker) };
             foreach (var descriptor in services.Where(x => x.ServiceType == typeof(IHostedService) && workers.Contains(x.ImplementationType)).ToArray())
                 services.Remove(descriptor);
         });

@@ -52,7 +52,7 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLi
             var workerTypes = new HashSet<Type>
             {
                 typeof(OutboxPublisherWorker), typeof(KafkaEmailConsumerWorker),
-                typeof(EmailDeliveryWorker), typeof(OutboxCleanupWorker), typeof(AttachmentCleanupWorker)
+                typeof(EmailDeliveryWorker), typeof(OutboxCleanupWorker)
             };
             foreach (var descriptor in services.Where(x => x.ServiceType == typeof(IHostedService) &&
                          x.ImplementationType is not null && workerTypes.Contains(x.ImplementationType)).ToArray())

@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Account reset",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/UserService.cs",
   "variables": {
     "fullName": {

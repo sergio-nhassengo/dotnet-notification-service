@@ -4,7 +4,6 @@
     "tan-webservice"
   ],
   "title": "Trucks uploaded to SEW",
-  "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/SewTanUploaderService.cs",
   "variables": {
     "transporterName": {
