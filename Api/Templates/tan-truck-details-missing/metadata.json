@@ -1,0 +1,19 @@
+{
+  "id": "tan-truck-details-missing",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Truck details missing for TIP generation",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/SewTanUploaderService.cs",
+  "variables": {
+    "registrationNumber": {
+      "description": "Truck",
+      "example": "AAA-123-MP"
+    },
+    "borderArrivalAt": {
+      "description": "Border arrival at",
+      "example": "11 Sep 2026 10:00 CAT"
+    }
+  }
+}

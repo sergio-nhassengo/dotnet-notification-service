@@ -1,4 +1,5 @@
-CBR vessel change requested
+MPDC TAN / Cargo Booking
+Tan cbr vessel change requested
 
 A vessel change has been requested for the cargo booking below.
 
@@ -12,4 +13,4 @@ Parcel: {{parcelNumber}}
 Submitted by: {{submittedBy}}
 Submitted at: {{submittedAt}}
 
-Review the cargo booking and the requested vessel change before making a decision.
+This is an automated notification. Please do not reply.

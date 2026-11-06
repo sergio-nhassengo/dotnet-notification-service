@@ -1,0 +1,19 @@
+{
+  "id": "tan-sew-trucks-uploaded",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Trucks uploaded to SEW",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/SewTanUploaderService.cs",
+  "variables": {
+    "transporterName": {
+      "description": "Transporter",
+      "example": "Example Transporter"
+    },
+    "truckDetails": {
+      "description": "TAN, truck, trailer, order and driver details",
+      "example": "TAN-1204; AAA-123-MP; TRL-101; ORD-204; Example Driver"
+    }
+  }
+}

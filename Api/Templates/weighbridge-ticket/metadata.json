@@ -1,13 +1,11 @@
 {
   "id": "weighbridge-ticket",
   "applications": [
-    "otc-api",
-    "weighbridge-api",
     "tan-webservice"
   ],
   "title": "Weighbridge ticket",
   "minimumAttachments": 1,
-  "source": "otc-api/Infrastructure/Services/EmailService.cs; weighbridge-tan-webservice/API/Workers/SendTicketToTransporterJob.cs",
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/ReceiptTransactionNotification.cs",
   "variables": {
     "ticketId": {
       "description": "Ticket",

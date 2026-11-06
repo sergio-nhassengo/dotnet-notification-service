@@ -1,4 +1,5 @@
-TIP payment submitted
+MPDC TAN / Cargo Booking
+Tan tip payment submitted
 
 The payment reference has been submitted to the bank for payment.
 
@@ -16,4 +17,4 @@ Amount: {{amount}}
 Currency: {{currency}}
 Bank: {{bankName}}
 
-Await the payment outcome. Submission alone does not confirm payment.
+This is an automated notification. Please do not reply.

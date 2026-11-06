@@ -1,11 +1,9 @@
-using Application.Common.Security;
-using Application.Features.Notifications.Queries.Delivery;
-using Application.Features.Notifications.Queries.Outbox;
+using Application.Features.Notifications.Queries.GetNextDueEmailDelivery;
+using Application.Features.Notifications.Queries.GetNextPendingOutboxMessage;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using NSubstitute;
 
 namespace Persistence.UnitTests;
 
@@ -52,17 +50,16 @@ public sealed class NotificationHandlerSqliteTests
         await using var context = CreateContext(connection, now);
         await context.Database.EnsureCreatedAsync();
 
-        var firstQueued = CreateNotification(now.AddMinutes(-2), now);
-        var secondQueued = CreateNotification(now.AddMinutes(-1), now);
-        var retryScheduled = CreateNotification(now.AddMinutes(-3), now);
-        retryScheduled.StartAttempt(now.AddMinutes(-4));
+        var firstQueued = CreateNotification(now.AddMinutes(-2), now.AddMinutes(-2));
+        var secondQueued = CreateNotification(now.AddMinutes(-1), now.AddMinutes(-1));
+        var retryScheduled = CreateNotification(now.AddMinutes(-3), now.AddMinutes(-3));
+        retryScheduled.RecordAttempt(now.AddMinutes(-4), now.AddMinutes(-4));
         retryScheduled.ScheduleRetry("Transient", "Retry", now.AddMinutes(-3), now.AddMinutes(-4));
         var future = CreateNotification(now.AddMinutes(1), now);
         var pending = EmailNotification.Create(
             Guid.NewGuid(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString(),
-            "recipient@example.com", null, "sender@example.com", null, null,
-            "payment-confirmed", "{}", null, NotificationSource.RestApi,
-            now, now.AddMinutes(-5), now);
+            "sender@example.com", null,
+            "payment-confirmed", "{}", null, now);
         context.EmailNotifications.AddRange(firstQueued, secondQueued, retryScheduled, future, pending);
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
@@ -76,8 +73,7 @@ public sealed class NotificationHandlerSqliteTests
 
         var persisted = await context.EmailNotifications.ToListAsync();
         Assert.Equal(5, persisted.Count);
-        Assert.Equal(3, persisted.Count(x => x.Status == NotificationStatus.Queued));
-        Assert.Single(persisted, x => x.Status == NotificationStatus.RetryScheduled);
+        Assert.Equal(4, persisted.Count(x => x.Status == NotificationStatus.RetryScheduled));
         Assert.Single(persisted, x => x.Status == NotificationStatus.Pending);
         Assert.All(persisted.Where(x => x.Status == NotificationStatus.Queued), x => Assert.Equal(0, x.AttemptCount));
     }
@@ -141,9 +137,8 @@ public sealed class NotificationHandlerSqliteTests
         var future = CreateNotification(now.AddMinutes(1), now);
         var pending = EmailNotification.Create(
             Guid.NewGuid(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString(),
-            "recipient@example.com", null, "sender@example.com", null, null,
-            "payment-confirmed", "{}", null, NotificationSource.RestApi,
-            now, now.AddMinutes(-1), now);
+            "sender@example.com", null,
+            "payment-confirmed", "{}", null, now);
         context.EmailNotifications.AddRange(future, pending);
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
@@ -158,14 +153,12 @@ public sealed class NotificationHandlerSqliteTests
     private static ApplicationDbContext CreateContext(SqliteConnection connection, DateTimeOffset now)
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseSqlite(connection).Options;
-        return new ApplicationDbContext(options, new FakeDateTime(now), Substitute.For<ICurrentUserService>());
+        return new ApplicationDbContext(options);
     }
 
     private static OutboxMessage CreateOutbox(DateTimeOffset occurredAt, DateTimeOffset nextAttemptAt) => new()
     {
         Id = Guid.NewGuid(),
-        EventType = "test",
-        SchemaVersion = 1,
         MessageKey = Guid.NewGuid(),
         Topic = "test-topic",
         Payload = "{}",
@@ -174,14 +167,14 @@ public sealed class NotificationHandlerSqliteTests
         CreatedAt = occurredAt
     };
 
-    private static EmailNotification CreateNotification(DateTimeOffset scheduledAt, DateTimeOffset now)
+    private static EmailNotification CreateNotification(DateTimeOffset dueAt, DateTimeOffset now)
     {
         var notification = EmailNotification.Create(
             Guid.NewGuid(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString(),
-            "recipient@example.com", null, "sender@example.com", null, null,
-            "payment-confirmed", "{}", null, NotificationSource.RestApi,
-            now, scheduledAt, now);
+            "sender@example.com", null,
+            "payment-confirmed", "{}", null, now);
         notification.MarkQueued(now);
+        notification.ScheduleRetry("Transient", "Retry", dueAt, now);
         return notification;
     }
 }

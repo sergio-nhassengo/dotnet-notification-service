@@ -1,0 +1,12 @@
+MPDC TAN / Cargo Booking
+Cargo booking status notification
+
+Review the cargo booking request status below.
+
+Cargo booking request: {{cbrId}}
+Booking status: {{status}}
+Customer: {{customerName}}
+Vessel, cargo, quantity and booking details: {{bookingDetails}}
+Required follow-up: {{nextSteps}}
+
+This is an automated notification. Please do not reply.

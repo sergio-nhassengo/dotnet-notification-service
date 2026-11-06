@@ -1,3 +1,4 @@
+MPDC TAN / Cargo Booking
 Data integrity report
 
 Please find attached the data integrity report.
@@ -7,4 +8,4 @@ Reporting period: {{reportPeriod}}
 Issues found: {{issueCount}}
 Summary: {{summary}}
 
-Review the report and reconcile the affected records in the originating application.
+This is an automated notification. Please do not reply.

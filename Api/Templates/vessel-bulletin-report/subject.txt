@@ -1,1 +1,0 @@
-Vessel bulletin - {{vesselName}} - {{workOrderId}} - Shift {{shiftNumber}}

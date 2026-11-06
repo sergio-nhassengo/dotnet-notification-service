@@ -1,0 +1,9 @@
+MPDC TAN / Cargo Booking
+Trucks uploaded to SEW
+
+The following truck details have been uploaded to SEW for customs processing.
+
+Transporter: {{transporterName}}
+TAN, truck, trailer, order and driver details: {{truckDetails}}
+
+This is an automated notification. Please do not reply.

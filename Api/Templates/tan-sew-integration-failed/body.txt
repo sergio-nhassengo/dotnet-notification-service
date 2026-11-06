@@ -1,4 +1,5 @@
-SEW integration failure
+MPDC TAN / Cargo Booking
+Tan sew integration failed
 
 A SEW integration operation failed.
 
@@ -8,4 +9,4 @@ Occurred at: {{occurredAt}}
 Error code: {{errorCode}}
 Error summary: {{errorSummary}}
 
-Investigate the integration logs using the reference above and confirm the remote outcome before retrying.
+This is an automated notification. Please do not reply.

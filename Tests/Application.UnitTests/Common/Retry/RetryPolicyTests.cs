@@ -1,4 +1,5 @@
 using Application.Common.Retry;
+using Domain.Enums;
 
 namespace Application.UnitTests.Common.Retry;
 
@@ -60,5 +61,16 @@ public class RetryPolicyTests
     public void Get_next_attempt_at_rejects_attempt_zero()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => _policy.GetNextAttemptAt(Now, 0));
+    }
+
+    [Theory]
+    [InlineData(EmailFailureCategory.Transient, true)]
+    [InlineData(EmailFailureCategory.RateLimited, true)]
+    [InlineData(EmailFailureCategory.Permanent, false)]
+    [InlineData(EmailFailureCategory.Configuration, false)]
+    [InlineData(EmailFailureCategory.None, false)]
+    public void Only_transient_and_rate_limited_failures_are_retryable(EmailFailureCategory category, bool expected)
+    {
+        Assert.Equal(expected, RetryPolicy.IsRetryable(category));
     }
 }

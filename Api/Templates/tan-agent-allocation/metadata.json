@@ -1,0 +1,35 @@
+{
+  "id": "tan-agent-allocation",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "TAN allocated to your agency",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Application/Tan/ChangeTanAgent.cs",
+  "variables": {
+    "tanId": {
+      "description": "TAN",
+      "example": "TAN-1204"
+    },
+    "agentName": {
+      "description": "Receiving agent",
+      "example": "Example Agent"
+    },
+    "previousAgentName": {
+      "description": "Allocating agent",
+      "example": "Previous Agent"
+    },
+    "registrationNumber": {
+      "description": "Truck",
+      "example": "AAA-123-MP"
+    },
+    "trailer1": {
+      "description": "Trailer 1",
+      "example": "TRL-101"
+    },
+    "trailer2": {
+      "description": "Trailer 2",
+      "example": "Not applicable"
+    }
+  }
+}

@@ -1,1 +1,1 @@
-Weighbridge - Transactions report - {{orderNumber}}
+Weighbridge transactions report — {{orderNumber}}

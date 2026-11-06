@@ -8,7 +8,8 @@ public enum ErrorType
     Validation,
     NotFound,
     Conflict,
-    Unauthorized
+    Unauthorized,
+    Forbidden
 }
 
 public record Error(string Code, string Message, ErrorType Type)
@@ -27,6 +28,9 @@ public record Error(string Code, string Message, ErrorType Type)
     public static Error Conflict(string code, string message) => new(code, message, ErrorType.Conflict);
 
     public static Error Unauthorized(string code, string message) => new(code, message, ErrorType.Unauthorized);
+
+    // The caller is authenticated but not permitted to perform this action.
+    public static Error Forbidden(string code, string message) => new(code, message, ErrorType.Forbidden);
 }
 
 public sealed record ValidationError(Error[] Errors)

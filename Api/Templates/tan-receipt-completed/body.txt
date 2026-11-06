@@ -1,0 +1,24 @@
+MPDC TAN / Cargo Booking
+Receipt transaction completed
+
+The truck has completed its receipt transaction.
+
+Receipt transaction: {{transactionId}}
+Order: {{orderNumber}}
+Customer: {{customerName}}
+Commodity: {{commodity}}
+Parcel: {{parcelNumber}}
+Destination: {{destination}}
+Transporter: {{transporterName}}
+Truck: {{registrationNumber}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+Mine mass (kg): {{mineMassKg}}
+Mine ticket: {{mineTicketNumber}}
+First weighing at: {{entryAt}}
+Second weighing at: {{exitAt}}
+Gross mass (kg): {{grossKg}}
+Tare mass (kg): {{tareKg}}
+Nett mass (kg): {{nettKg}}
+
+This is an automated notification. Please do not reply.

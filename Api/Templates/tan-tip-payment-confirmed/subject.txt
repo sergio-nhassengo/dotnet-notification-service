@@ -1,1 +1,1 @@
-TAN - TIP payment confirmed - {{registrationNumber}}
+Tan tip payment confirmed — {{tanId}}

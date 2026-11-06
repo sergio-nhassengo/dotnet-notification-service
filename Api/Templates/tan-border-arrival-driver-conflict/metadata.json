@@ -1,0 +1,35 @@
+{
+  "id": "tan-border-arrival-driver-conflict",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Border arrival: driver assigned to other trucks",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Application/Tan/UpdateTanBorderArrivalTime.cs",
+  "variables": {
+    "tanId": {
+      "description": "TAN",
+      "example": "TAN-1204"
+    },
+    "registrationNumber": {
+      "description": "Arriving truck",
+      "example": "AAA-123-MP"
+    },
+    "borderArrivalAt": {
+      "description": "Border arrival at",
+      "example": "11 Sep 2026 10:00 CAT"
+    },
+    "driverName": {
+      "description": "Driver",
+      "example": "Example Driver"
+    },
+    "driverPassport": {
+      "description": "Driver passport",
+      "example": "EXAMPLE-123"
+    },
+    "otherTrucks": {
+      "description": "Other TANs and truck details",
+      "example": "TAN-1203; BBB-456-MP"
+    }
+  }
+}

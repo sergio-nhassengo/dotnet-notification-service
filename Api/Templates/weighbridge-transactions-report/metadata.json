@@ -1,8 +1,6 @@
 {
   "id": "weighbridge-transactions-report",
   "applications": [
-    "otc-api",
-    "weighbridge-api",
     "tan-webservice"
   ],
   "title": "Weighbridge transactions report",
@@ -23,7 +21,7 @@
     },
     "reportPeriod": {
       "description": "Reporting period",
-      "example": "01–09 Sep 2026"
+      "example": "01\u201309 Sep 2026"
     },
     "generatedAt": {
       "description": "Generated at",

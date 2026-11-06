@@ -8,47 +8,35 @@ public sealed class EmailNotification : BaseEntity<Guid>
     private EmailNotification() { }
 
     public string ApplicationId { get; private set; } = "legacy";
-    public string? BusinessReference { get; private set; }
     public string? RequestHash { get; private set; }
     public string? ContentJson { get; private set; }
 
-    public void SetIntegrationContext(string applicationId, string? businessReference, string? requestHash, string? contentJson) =>
-        (ApplicationId, BusinessReference, RequestHash, ContentJson) = (applicationId, businessReference, requestHash, contentJson);
+    public void SetIntegrationContext(string applicationId, string? requestHash, string? contentJson) =>
+        (ApplicationId, RequestHash, ContentJson) = (applicationId, requestHash, contentJson);
 
     public Guid MessageId { get; private set; }
     public string CorrelationId { get; private set; } = string.Empty;
     public string IdempotencyKey { get; private set; } = string.Empty;
-    public string RecipientEmail { get; private set; } = string.Empty;
-    public string? RecipientName { get; private set; }
     public string SenderEmail { get; private set; } = string.Empty;
     public string? SenderName { get; private set; }
-    public string? ReplyTo { get; private set; }
     public string TemplateId { get; private set; } = string.Empty;
     public string TemplateVariables { get; private set; } = "{}";
     public string? Subject { get; private set; }
     public NotificationStatus Status { get; private set; }
-    public NotificationSource Source { get; private set; }
-    public DateTimeOffset RequestedAt { get; private set; }
-    public DateTimeOffset? ScheduledAt { get; private set; }
+    public DateTimeOffset? LastAttemptAt { get; private set; }
     public DateTimeOffset? SentAt { get; private set; }
     public DateTimeOffset? FailedAt { get; private set; }
-    public string? ProviderMessageId { get; private set; }
     public int AttemptCount { get; private set; }
     public DateTimeOffset? NextAttemptAt { get; private set; }
     public string? LastErrorCode { get; private set; }
     public string? LastErrorMessage { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
-    public string? OriginalTopic { get; private set; }
-    public int? OriginalPartition { get; private set; }
-    public long? OriginalOffset { get; private set; }
-    public ICollection<DeliveryAttempt> DeliveryAttempts { get; private set; } = [];
 
     public static EmailNotification Create(Guid messageId, string correlationId, string idempotencyKey,
-        string recipientEmail, string? recipientName, string senderEmail, string? senderName, string? replyTo,
+        string senderEmail, string? senderName,
         string templateId,  string templateVariables, string? subject,
-        NotificationSource source, DateTimeOffset requestedAt,
-        DateTimeOffset? scheduledAt, DateTimeOffset now)
+        DateTimeOffset now)
     {
         return new EmailNotification
         {
@@ -56,50 +44,42 @@ public sealed class EmailNotification : BaseEntity<Guid>
             MessageId = messageId,
             CorrelationId = correlationId,
             IdempotencyKey = idempotencyKey,
-            RecipientEmail = recipientEmail.Trim().ToLowerInvariant(),
-            RecipientName = recipientName,
             SenderEmail = senderEmail.Trim().ToLowerInvariant(),
             SenderName = senderName,
-            ReplyTo = replyTo,
             TemplateId = templateId,
             TemplateVariables = templateVariables,
             Subject = subject,
-            Source = source,
-            RequestedAt = requestedAt,
-            ScheduledAt = scheduledAt,
             Status = NotificationStatus.Pending,
-            NextAttemptAt = scheduledAt ?? now,
+            NextAttemptAt = now,
             CreatedAt = now,
             UpdatedAt = now
         };
     }
 
-    public void SetKafkaOrigin(string topic, int partition, long offset) =>
-        (OriginalTopic, OriginalPartition, OriginalOffset) = (topic, partition, offset);
-
     public void MarkQueued(DateTimeOffset now) { Status = NotificationStatus.Queued; UpdatedAt = now; }
-    public void StartAttempt(DateTimeOffset now) { Status = NotificationStatus.Processing; AttemptCount++; UpdatedAt = now; }
-    public void MarkSent(string? providerMessageId, DateTimeOffset now)
+    public void RecordAttempt(DateTimeOffset? providerCalledAt, DateTimeOffset now)
     {
-        Status = NotificationStatus.Sent; SentAt = now; ProviderMessageId = providerMessageId;
+        AttemptCount++;
+        if (providerCalledAt.HasValue) LastAttemptAt = providerCalledAt;
+        UpdatedAt = now;
+    }
+    public void MarkSent(DateTimeOffset now)
+    {
+        Status = NotificationStatus.Sent; SentAt = now;
         NextAttemptAt = null; LastErrorCode = null; LastErrorMessage = null; UpdatedAt = now;
     }
     public void ScheduleRetry(string code, string message, DateTimeOffset nextAttemptAt, DateTimeOffset now)
     {
-        Status = NotificationStatus.RetryScheduled; LastErrorCode = code; LastErrorMessage = message;
+        Status = NotificationStatus.RetryScheduled; LastErrorCode = Truncate(code, 100); LastErrorMessage = Truncate(message, 500);
         NextAttemptAt = nextAttemptAt; UpdatedAt = now;
     }
     public void MarkPermanentlyFailed(string code, string message, DateTimeOffset now)
     {
-        Status = NotificationStatus.PermanentlyFailed; FailedAt = now; LastErrorCode = code;
-        LastErrorMessage = message; NextAttemptAt = null; UpdatedAt = now;
+        Status = NotificationStatus.PermanentlyFailed; FailedAt = now; LastErrorCode = Truncate(code, 100);
+        LastErrorMessage = Truncate(message, 500); NextAttemptAt = null; UpdatedAt = now;
     }
     public void MarkDeadLettered(DateTimeOffset now) { Status = NotificationStatus.DeadLettered; UpdatedAt = now; }
-    public void Replay(DateTimeOffset now)
-    {
-        if (Status is not (NotificationStatus.DeadLettered or NotificationStatus.PermanentlyFailed))
-            throw new InvalidOperationException("Only failed notifications can be replayed.");
-        Status = NotificationStatus.RetryScheduled; NextAttemptAt = now; FailedAt = null;
-        LastErrorCode = null; LastErrorMessage = null; UpdatedAt = now;
-    }
+
+    // Matches the persisted column lengths so a long error never makes the result save fail.
+    private static string Truncate(string value, int maxLength) => value.Length > maxLength ? value[..maxLength] : value;
 }

@@ -1,0 +1,19 @@
+{
+  "id": "tan-data-integrity-report-link",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Data integrity report available",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/DataIntegrityService.cs",
+  "variables": {
+    "scope": {
+      "description": "Scope and order or parcel reference",
+      "example": "Receipt order ORD-204"
+    },
+    "reportUrl": {
+      "description": "Report address",
+      "example": "https://reports.example.com/integrity/204"
+    }
+  }
+}

@@ -1,3 +1,4 @@
+MPDC TAN / Cargo Booking
 Weighbridge ticket
 
 Please find attached the weighbridge ticket.
@@ -9,4 +10,4 @@ Order: {{orderNumber}}
 Customer: {{customerName}}
 Issued at: {{issuedAt}}
 
-Retain the attached ticket for your records.
+This is an automated notification. Please do not reply.

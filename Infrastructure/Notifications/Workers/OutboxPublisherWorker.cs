@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Application.Common.Interfaces;
-using Application.Features.Notifications.Commands.Outbox;
-using Application.Features.Notifications.Queries.Outbox;
-using Application.Notifications.Models;
+using Application.Features.Notifications.Commands.CompleteOutboxMessage;
+using Application.Features.Notifications.Commands.FailOutboxMessage;
+using Application.Features.Notifications.Queries.GetNextPendingOutboxMessage;
 using Infrastructure.Notifications.Kafka;
 using Infrastructure.Notifications.Options;
 using MediatR;

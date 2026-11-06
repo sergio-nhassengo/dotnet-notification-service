@@ -1,0 +1,11 @@
+MPDC TAN / Cargo Booking
+Account reset
+
+Your MPDC Cargo Booking account has been reset. Change your password after logging in.
+
+Account holder: {{fullName}}
+Username: {{username}}
+Initial or reset password (sensitive): {{password}}
+Cargo Booking address: {{loginUrl}}
+
+This is an automated notification. Please do not reply.

@@ -15,8 +15,8 @@ internal static class UniqueConstraintViolation
                 return true;
 
             if (typeName == "Microsoft.Data.Sqlite.SqliteException" &&
-                current.GetType().GetProperty("SqliteErrorCode")?.GetValue(current) is int sqliteCode &&
-                sqliteCode == 19)
+                current.GetType().GetProperty("SqliteExtendedErrorCode")?.GetValue(current) is int sqliteCode &&
+                sqliteCode is 2067 or 1555)
                 return true;
         }
 

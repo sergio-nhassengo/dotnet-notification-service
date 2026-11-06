@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -10,6 +10,10 @@ namespace Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // These historical migrations were SQL Server-only. SQLite is bootstrapped
+            // and upgraded from its former development schema by SimplifyNotificationPersistence.
+            if (ActiveProvider == "Microsoft.EntityFrameworkCore.Sqlite") return;
+
             migrationBuilder.DropColumn(
                 name: "TemplateVersion",
                 table: "EmailNotifications");
@@ -18,6 +22,10 @@ namespace Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // These historical migrations were SQL Server-only. SQLite is bootstrapped
+            // and upgraded from its former development schema by SimplifyNotificationPersistence.
+            if (ActiveProvider == "Microsoft.EntityFrameworkCore.Sqlite") return;
+
             migrationBuilder.AddColumn<int>(
                 name: "TemplateVersion",
                 table: "EmailNotifications",

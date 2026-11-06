@@ -1,0 +1,13 @@
+MPDC TAN / Cargo Booking
+TAN allocated to your agency
+
+A TAN has been allocated to your console. Please allocate the correct order.
+
+TAN: {{tanId}}
+Receiving agent: {{agentName}}
+Allocating agent: {{previousAgentName}}
+Truck: {{registrationNumber}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+
+This is an automated notification. Please do not reply.

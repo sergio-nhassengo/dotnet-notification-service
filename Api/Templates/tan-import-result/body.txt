@@ -1,0 +1,10 @@
+MPDC TAN / Cargo Booking
+TAN import result
+
+The import has completed with the results below. Review unsuccessful records before submitting them again.
+
+Import file: {{fileName}}
+Successfully imported records: {{successDetails}}
+Rejected records and reasons: {{errorDetails}}
+
+This is an automated notification. Please do not reply.

@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using Application.Common.Security;
+using Application.Notifications.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -9,7 +7,7 @@ namespace Application.Common.Behaviours;
 
 public class PerformanceBehaviour<TRequest, TResponse>(
     ILogger<PerformanceBehaviour<TRequest, TResponse>> logger,
-    ICurrentUserService currentUserService)
+    INotificationCaller caller)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
@@ -23,22 +21,25 @@ public class PerformanceBehaviour<TRequest, TResponse>(
 
         stopwatch.Stop();
 
-        if (stopwatch.ElapsedMilliseconds > SlowRequestThresholdMilliseconds)
+        if (request is not ILongRunningRequest && stopwatch.ElapsedMilliseconds > SlowRequestThresholdMilliseconds)
         {
             if (typeof(TRequest).Namespace?.Contains(".Features.Notifications.", StringComparison.Ordinal) == true)
             {
-                logger.LogWarning("Slow request: {RequestName} ({ElapsedMilliseconds}ms) for user {UserId}",
-                    typeof(TRequest).Name, stopwatch.ElapsedMilliseconds, currentUserService.UserId ?? "anonymous");
+                logger.LogWarning("Slow request: {RequestName} ({ElapsedMilliseconds}ms) for application {ApplicationId}",
+                    typeof(TRequest).Name, stopwatch.ElapsedMilliseconds, ApplicationId);
                 return response;
             }
             logger.LogWarning(
-                "Slow request: {RequestName} ({ElapsedMilliseconds}ms) for user {UserId} {@Request}",
+                "Slow request: {RequestName} ({ElapsedMilliseconds}ms) for application {ApplicationId} {@Request}",
                 typeof(TRequest).Name,
                 stopwatch.ElapsedMilliseconds,
-                currentUserService.UserId ?? "anonymous",
+                ApplicationId,
                 request);
         }
 
         return response;
     }
+
+    // Background workers run outside an HTTP request, so there is no authenticated application.
+    private string ApplicationId => string.IsNullOrEmpty(caller.ApplicationId) ? "anonymous" : caller.ApplicationId;
 }

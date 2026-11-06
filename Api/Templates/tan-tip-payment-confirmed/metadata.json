@@ -3,7 +3,7 @@
   "applications": [
     "tan-webservice"
   ],
-  "title": "TIP payment confirmed",
+  "title": "Tan tip payment confirmed",
   "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs",
   "variables": {

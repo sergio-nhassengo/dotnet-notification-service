@@ -1,0 +1,19 @@
+{
+  "id": "tan-message",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "TAN notification",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/API/Controllers/EmailController.cs",
+  "variables": {
+    "title": {
+      "description": "Message title",
+      "example": "TAN notification"
+    },
+    "message": {
+      "description": "Message in plain text",
+      "example": "Please review TAN-1204."
+    }
+  }
+}

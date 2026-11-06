@@ -4,8 +4,6 @@ namespace Domain.Entities;
 
 public sealed class OutboxMessage : BaseEntity<Guid>
 {
-    public string EventType { get; set; } = string.Empty;
-    public int SchemaVersion { get; set; }
     public Guid MessageKey { get; set; }
     public string Topic { get; set; } = string.Empty;
     public string Payload { get; set; } = string.Empty;

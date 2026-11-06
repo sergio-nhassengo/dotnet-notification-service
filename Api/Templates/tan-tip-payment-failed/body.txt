@@ -1,4 +1,5 @@
-TIP payment failed
+MPDC TAN / Cargo Booking
+Tan tip payment failed
 
 The bank reported that the TIP payment failed.
 
@@ -16,4 +17,4 @@ Amount: {{amount}}
 Currency: {{currency}}
 Bank failure reason: {{reason}}
 
-Review the failure reason and payment record before arranging another payment attempt.
+This is an automated notification. Please do not reply.

@@ -1,0 +1,9 @@
+MPDC TAN / Cargo Booking
+Truck details missing for TIP generation
+
+The truck has arrived at the border, but its details could not be found for TIP generation. Send the truck details to MPDC or update them in TAN.
+
+Truck: {{registrationNumber}}
+Border arrival at: {{borderArrivalAt}}
+
+This is an automated notification. Please do not reply.

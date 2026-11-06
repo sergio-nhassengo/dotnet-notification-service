@@ -1,0 +1,29 @@
+using Application.Common.Interfaces;
+using Domain.Entities;
+using Domain.Enums;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+
+namespace Application.Features.Notifications.Queries.GetNextDueEmailDelivery;
+
+public sealed record GetNextDueEmailDeliveryQuery(DateTimeOffset Now)
+    : IRequest<EmailNotification?>;
+
+public sealed class GetNextDueEmailDeliveryQueryHandler(IApplicationDbContext db)
+    : IRequestHandler<GetNextDueEmailDeliveryQuery, EmailNotification?>
+{
+    public Task<EmailNotification?> Handle(
+        GetNextDueEmailDeliveryQuery request,
+        CancellationToken cancellationToken)
+    {
+        var eligibleStates = new[] { NotificationStatus.Queued, NotificationStatus.RetryScheduled };
+
+        return db.EmailNotifications
+            .AsNoTracking()
+            .Where(x => eligibleStates.Contains(x.Status) &&
+                        x.NextAttemptAt.HasValue && x.NextAttemptAt.Value <= request.Now)
+            .OrderBy(x => x.CreatedAt)
+            .ThenBy(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+}

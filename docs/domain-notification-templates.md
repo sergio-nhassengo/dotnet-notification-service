@@ -1,298 +1,72 @@
-# Domain notification templates
-
-28 domain-specific templates are shipped without template versions, in addition to the existing `payment-confirmed` template. All changes are confined to the notification service.
-
-The templates are based on notification workflows in OTC, Weighbridge and TAN. They are English emails with matching HTML and plain-text bodies. They do not query client databases, generate reports, choose recipients, or trigger themselves.
-
-## Request contract
-
-Use `POST /api/v1/notifications/email` with application authentication. Set `templateId` and `variables`; omit `htmlBody`, `textBody`, and normally `subject`. Existing application profiles allow only their listed templates. The legacy profile remains unchanged.
-
-All variables listed below are required nonempty strings. Supply plain text, not HTML. Use `Not applicable` or `Not provided` for unavailable contextual details; do not invent transaction or payment identifiers. Format dates with an explicit timezone and amounts/masses with the indicated units before submission. Variable values are HTML-encoded and never evaluated as further template placeholders.
-
-Templates marked **attachment required** need at least one ordinary attachment reference, in addition to their variables. An inline logo does not satisfy this requirement. Upload the generated document through `/api/v1/notifications/attachments` first.
-
-`metadata.json` alongside each template contains its variable descriptions, example values, application ownership and source-workflow reference. Examples are illustrative, not production data.
-
-## Template catalogue
-
-| Template ID | Applications | Attachment |
-|---|---|---|
-| `otc-additional-cargo-requested` | `otc-api` | Optional |
-| `otc-additional-cargo-approved` | `otc-api` | Optional |
-| `otc-additional-cargo-rejected` | `otc-api` | Optional |
-| `otc-work-order-approval-requested` | `otc-api` | Optional |
-| `otc-vessel-arrival-updated` | `otc-api` | Optional |
-| `otc-vessel-grt-not-billable` | `otc-api` | Optional |
-| `otc-bank-guarantees-expiring` | `otc-api` | Required |
-| `vessel-bulletin-report` | `otc-api`, `weighbridge-api` | Required |
-| `weighbridge-truck-on-hold` | `weighbridge-api` | Optional |
-| `weighbridge-truck-release-approved` | `weighbridge-api` | Optional |
-| `weighbridge-truck-release-rejected` | `weighbridge-api` | Optional |
-| `weighbridge-shipping-activated` | `weighbridge-api` | Optional |
-| `weighbridge-shipping-deactivated` | `weighbridge-api` | Optional |
-| `rail-consignment-alert` | `weighbridge-api`, `tan-webservice` | Optional |
-| `weighbridge-wagon-confirmed` | `weighbridge-api` | Optional |
-| `weighbridge-wagon-declined` | `weighbridge-api` | Optional |
-| `weighbridge-equipment-approval-requested` | `weighbridge-api` | Optional |
-| `tan-tip-generated` | `tan-webservice` | Optional |
-| `tan-tip-payment-submitted` | `tan-webservice` | Optional |
-| `tan-tip-payment-confirmed` | `tan-webservice` | Optional |
-| `tan-tip-payment-failed` | `tan-webservice` | Optional |
-| `tan-truck-release-requested` | `tan-webservice` | Optional |
-| `tan-cbr-vessel-change-requested` | `tan-webservice` | Optional |
-| `tan-sew-integration-failed` | `tan-webservice` | Optional |
-| `weighbridge-ticket` | `otc-api`, `weighbridge-api`, `tan-webservice` | Required |
-| `weighbridge-transactions-report` | `otc-api`, `weighbridge-api`, `tan-webservice` | Required |
-| `data-integrity-report` | `otc-api`, `weighbridge-api`, `tan-webservice` | Required |
-| `tan-trips-history-report` | `tan-webservice` | Required |
-
-## otc-additional-cargo-requested
-
-An additional cargo requisition has been submitted and awaits approval.
-
-Applications: `otc-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `requestId` | Request | AC-102 |
-| `vesselName` | Vessel | MV Example |
-| `workOrderId` | Work order | WO-1204 |
-| `agentName` | Agent | Example Agent |
-
-Source workflow: `otc-api/Application/Weighbridge/AdditionalCargo`.
-
-## otc-additional-cargo-approved
-
-The additional cargo request has been approved.
-
-Applications: `otc-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `requestId` | Request | AC-102 |
-| `vesselName` | Vessel | MV Example |
-| `workOrderId` | Work order | WO-1204 |
-| `agentName` | Agent | Example Agent |
-| `quantityKg` | Quantity to add (kg) | 25,000 |
-
-Source workflow: `otc-api/Application/Weighbridge/AdditionalCargo`.
-
-## otc-additional-cargo-rejected
-
-The additional cargo request has been rejected.
-
-Applications: `otc-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `requestId` | Request | AC-102 |
-| `vesselName` | Vessel | MV Example |
-| `workOrderId` | Work order | WO-1204 |
-| `agentName` | Agent | Example Agent |
-| `reason` | Rejection reason | The requested quantity exceeds the approved allocation. |
-
-Source workflow: `otc-api/Application/Weighbridge/AdditionalCargo`.
-
-## otc-work-order-approval-requested
-
-A work order requires your review.
-
-Applications: `otc-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `vesselName` | Vessel | MV Example |
-| `workOrderId` | Work order | WO-1204 |
-| `requesterName` | Requested by | Example Requester |
-| `approvalStage` | Approval stage | Operations |
-| `submittedAt` | Submitted at | 09 Sep 2026 10:00 CAT |
-| `summary` | Work requested | Review the proposed cargo operation. |
-
-Source workflow: `otc-api/API/Controllers/WorkOrderController.cs`.
-
-## otc-vessel-arrival-updated
-
-Arrival or berthing information has been updated.
-
-Applications: `otc-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `vesselName` | Vessel | MV Example |
-| `workOrderId` | Work order | WO-1204 |
-| `marineVoyageNumber` | Marine voyage / Contra-Marca | MV-204 |
-| `arrivalAt` | Arrival | 09 Sep 2026 10:00 CAT |
-| `berthingAt` | Berthing | 09 Sep 2026 12:00 CAT |
-| `berth` | Berth | Berth 1 |
-
-Source workflow: `otc-api/Application/VesselBerthings/UpdateArrivalAndBerthingDates.cs`.
-
-## otc-vessel-grt-not-billable
-
-The vessel GRT will not be considered for billing to the service provider listed below.
-
-Applications: `otc-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `vesselName` | Vessel | MV Example |
-| `workOrderId` | Work order | WO-1204 |
-| `grt` | GRT | 35,000 |
-| `marineVoyageNumber` | Marine voyage / Contra-Marca | MV-204 |
-| `departureAt` | Departure | 09 Sep 2026 18:00 CAT |
-| `serviceProvider` | Service provider | Example Marine Services |
-
-Source workflow: `otc-api/Application/WorkOrders/MarkVesselDeparture.cs`.
-
-## otc-bank-guarantees-expiring
-
-Please find attached the report of bank guarantees approaching expiry.
-
-Applications: `otc-api`. **Attachment required.**
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `expiryWindowDays` | Expiry window (days) | 30 |
-| `reportDate` | Report date | 09 Sep 2026 |
-| `summary` | Report summary | Review the attached guarantees and arrange renewals where required. |
-
-Source workflow: `otc-api/API/Workers/NotifyBankGuarantees30DaysJob.cs`.
-
-## vessel-bulletin-report
-
-Please find attached the vessel bulletin for the shift below.
-
-Applications: `otc-api`, `weighbridge-api`. **Attachment required.**
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `vesselName` | Vessel | MV Example |
-| `workOrderId` | Work order | WO-1204 |
-| `shiftNumber` | Shift | 2 |
-| `shiftDate` | Shift date | 09 Sep 2026 |
-
-Source workflow: `otc-api/Infrastructure/Services/SSRSReportService.cs; weighbridge-web-api/WeighBridgeWeAPI/Infrastructure/Services/SSRSReportService.cs`.
-
-## weighbridge-truck-on-hold
-
-A truck has been placed on hold and requires follow-up.
-
-Applications: `weighbridge-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `registrationNumber` | Truck | AAA-123-MP |
-| `tanId` | TAN | TAN-1204 |
-| `orderNumber` | Order | ORD-204 |
-| `trailer1` | Trailer 1 | TRL-101 |
-| `trailer2` | Trailer 2 | Not applicable |
-| `customerName` | Customer | Example Cargo |
-| `commodity` | Commodity | Coal |
-| `destination` | Destination / slab | Terminal 1 |
-| `mineTicketNumber` | Mine ticket | MT-204 |
-| `mineGrossMass` | Mine gross mass (kg) | 48,000 |
-| `grossMass` | First mass (kg) | 47,800 |
-| `parcelNumber` | Parcel | PAR-102 |
-| `transporterName` | Transporter | Example Transporter |
-| `onHoldAt` | On hold since | 09 Sep 2026 10:00 CAT |
-| `tareMass` | Tare mass (kg) | 18,000 |
-| `netMass` | Net mass (kg) | 29,800 |
-| `reason` | Reason | Weight discrepancy requires review. |
-
-Source workflow: `weighbridge-web-api/WeighBridgeWeAPI/Application/ReceiptTransactions/Commands/PutOnHoldTransaction.cs`.
-
-## weighbridge-truck-release-approved
-
-Operations has approved the truck release request.
-
-Applications: `weighbridge-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `registrationNumber` | Truck | AAA-123-MP |
-| `tanId` | TAN | TAN-1204 |
-| `orderNumber` | Order | ORD-204 |
-| `trailer1` | Trailer 1 | TRL-101 |
-| `trailer2` | Trailer 2 | Not applicable |
-| `customerName` | Customer | Example Cargo |
-| `commodity` | Commodity | Coal |
-| `destination` | Destination / slab | Terminal 1 |
-| `mineTicketNumber` | Mine ticket | MT-204 |
-| `mineGrossMass` | Mine gross mass (kg) | 48,000 |
-| `grossMass` | First mass (kg) | 47,800 |
-| `onHoldAt` | On hold since | 09 Sep 2026 10:00 CAT |
-| `reason` | Original hold reason | Weight discrepancy requires review. |
-| `agentComment` | Agent comment | Supporting documents have been provided. |
-| `supervisorComment` | Operations supervisor comment | Review completed; see the recorded decision. |
-
-Source workflow: `weighbridge-web-api/WeighBridgeWeAPI/Application/ReceiptTransactions/Commands/ApproveReleasedTransaction.cs`.
-
-## weighbridge-truck-release-rejected
-
-Operations has rejected the truck release request. The truck cannot continue in the process.
-
-Applications: `weighbridge-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `registrationNumber` | Truck | AAA-123-MP |
-| `tanId` | TAN | TAN-1204 |
-| `orderNumber` | Order | ORD-204 |
-| `trailer1` | Trailer 1 | TRL-101 |
-| `trailer2` | Trailer 2 | Not applicable |
-| `customerName` | Customer | Example Cargo |
-| `commodity` | Commodity | Coal |
-| `destination` | Destination / slab | Terminal 1 |
-| `mineTicketNumber` | Mine ticket | MT-204 |
-| `mineGrossMass` | Mine gross mass (kg) | 48,000 |
-| `grossMass` | First mass (kg) | 47,800 |
-| `onHoldAt` | On hold since | 09 Sep 2026 10:00 CAT |
-| `reason` | Original hold reason | Weight discrepancy requires review. |
-| `agentComment` | Agent comment | Supporting documents have been provided. |
-| `supervisorComment` | Operations supervisor comment | Review completed; see the recorded decision. |
-
-Source workflow: `weighbridge-web-api/WeighBridgeWeAPI/Application/ReceiptTransactions/Commands/RejectReleasedTransaction.cs`.
-
-## weighbridge-shipping-activated
-
-The cargo below has been activated for the shipping sequence.
-
-Applications: `weighbridge-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `shippingOrderId` | Shipping order | SO-104 |
-| `commodity` | Commodity | Coal |
-| `customerName` | Customer | Example Cargo |
-| `parcelNumber` | Parcel | PAR-102 |
-| `hatch` | Hatch | Hatch 2 |
-| `position` | Position | 1 |
-
-Source workflow: `weighbridge-web-api/WeighBridgeWeAPI/Application/ShippingOrders/ActivateShippingOrderDetail.cs`.
-
-## weighbridge-shipping-deactivated
-
-The cargo below has been deactivated for the shipping sequence.
-
-Applications: `weighbridge-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `shippingOrderId` | Shipping order | SO-104 |
-| `commodity` | Commodity | Coal |
-| `customerName` | Customer | Example Cargo |
-| `parcelNumber` | Parcel | PAR-102 |
-| `hatch` | Hatch | Hatch 2 |
-| `position` | Position | 1 |
-
-Source workflow: `weighbridge-web-api/WeighBridgeWeAPI/Application/ShippingOrders/ActivateShippingOrderDetail.cs`.
+# TAN notification templates
+
+37 templates owned exclusively by `tan-webservice`. No TAN application code has been changed.
+
+Submit to `POST /api/v1/notifications/email` with `Authorization: ApiKey tan-webservice.<secret>`. Supply `templateId`, `variables`, recipients, a stable `idempotencyKey` and `correlationId`. Omit raw bodies when using a template.
+
+All documented variables are required nonempty strings. Use plain text; HTML is encoded. For lists, provide one complete record per line; the HTML layout preserves line breaks. Use `None` for empty result lists and `Not applicable` for unavailable contextual fields. Format dates with a timezone and masses in the indicated units. Never fabricate identifiers. URL fields are displayed as text, not interpolated into HTML attributes.
+
+For required attachments, generate the document in TAN, upload it to `/api/v1/notifications/attachments`, then pass `attachments: [{ "attachmentId": "<returned UUID>" }]`. Inline logos do not satisfy this requirement. Keep attachment IDs and the full request stable on retries.
+
+## Workflow notes
+
+- Receipt completion, weighing-time discrepancy and nett deviation are separate notifications. Keep the positive customer threshold and strict greater-than comparison in TAN.
+- `weighbridge-ticket` covers both agent and transporter delivery. TAN must choose the external-storage PDF for Transfer To Port and Transfer To Vessel; templates do not generate reports or select recipients.
+- `data-integrity-report` requires an attachment; `tan-data-integrity-report-link` covers the existing report-link path for parcel, receipt, shipping and rail scopes.
+- `tan-operational-failure` covers worker, SFTP, bank authentication/payment submission, Gate One, KM4, cleanup, import-notification and report-delivery failures. Use `tan-sew-integration-failed` for SEW operation errors and `tan-sew-response-errors` for returned business validation errors. Send safe failure summaries rather than credentials or full exception dumps.
+- Account templates preserve the existing initial/reset-password workflow. Password values are sensitive and are persisted with notification variables; do not log them or use real passwords in examples.
+- CBR submission/resubmission/closure currently delegates to INPORT. `tan-cbr-status-notification` is prepared for a future explicit integration; it does not reproduce unseen INPORT email logic.
+- `tan-truck-release-requested` remains pending Operations approval. Use `tan-truck-release-operations-review` only for Operations recipients when including the Tally review address; use the original template for other recipients.
+- `tan-message` covers the generic email endpoint with a plain-text message. Existing raw HTML submission remains available. `payment-confirmed` retains the basic payment contract; TIP workflows should prefer their specific templates.
+- Some source jobs are disabled in startup. Templates provide content only and do not enable workers, SMS, integrations or new business events.
+
+## Catalogue
+
+| Template | Attachment required |
+|---|---|
+| `rail-consignment-alert` | No |
+| `tan-tip-generated` | No |
+| `tan-tip-payment-submitted` | No |
+| `tan-tip-payment-confirmed` | No |
+| `tan-tip-payment-failed` | No |
+| `tan-truck-release-requested` | No |
+| `tan-cbr-vessel-change-requested` | No |
+| `tan-sew-integration-failed` | No |
+| `weighbridge-ticket` | Yes |
+| `weighbridge-transactions-report` | Yes |
+| `data-integrity-report` | Yes |
+| `tan-trips-history-report` | Yes |
+| `tan-receipt-completed` | No |
+| `tan-receipt-time-discrepancy` | No |
+| `tan-receipt-nett-deviation` | No |
+| `tan-data-integrity-report-link` | No |
+| `tan-agent-allocation` | No |
+| `tan-driver-details` | No |
+| `tan-border-arrival-driver-conflict` | No |
+| `tan-truck-details-missing` | No |
+| `tan-sew-trucks-uploaded` | No |
+| `tan-tip-batch-generated` | No |
+| `tan-duplicate-declarations` | No |
+| `tan-duplicate-payment-references` | No |
+| `tan-sew-response-errors` | No |
+| `tan-import-result` | No |
+| `tan-operational-failure` | No |
+| `tan-wagons-submitted` | No |
+| `tan-wagons-updated` | No |
+| `tan-wagons-deleted` | No |
+| `tan-account-created` | No |
+| `tan-account-reset` | No |
+| `tan-agent-account-notification` | No |
+| `tan-cbr-status-notification` | No |
+| `tan-truck-release-operations-review` | No |
+| `tan-message` | No |
+| `payment-confirmed` | No |
 
 ## rail-consignment-alert
 
 An update has been issued for the rail consignment below.
 
-Applications: `weighbridge-api`, `tan-webservice`.
+Source: `weighbridge-tan-webservice/Application/RAN/RailConsignments/ReceiveRailConsignment.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -300,61 +74,11 @@ Applications: `weighbridge-api`, `tan-webservice`.
 | `message` | Update | Wagons are ready for review. |
 | `requestedBy` | Requested by | Example Operator |
 
-Source workflow: `weighbridge-web-api/WeighBridgeWeAPI/Application/RAN/RailConsignments/NotifyAgent.cs; weighbridge-tan-webservice/Application/RAN/RailConsignments/ReceiveRailConsignment.cs`.
-
-## weighbridge-wagon-confirmed
-
-The wagon below has been confirmed.
-
-Applications: `weighbridge-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `wagonNumber` | Wagon | WGN-104 |
-| `railOrderNumber` | Rail order | RO-104 |
-| `consignmentNumber` | Consignment | CON-301 |
-| `customerName` | Customer | Example Cargo |
-| `reason` | Decision details | See the inspection result recorded in the rail workflow. |
-
-Source workflow: `weighbridge-web-api/WeighBridgeWeAPI/Application/RAN/RailOrderDetail/WagonConfirmation.cs`.
-
-## weighbridge-wagon-declined
-
-The wagon below has been declined.
-
-Applications: `weighbridge-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `wagonNumber` | Wagon | WGN-104 |
-| `railOrderNumber` | Rail order | RO-104 |
-| `consignmentNumber` | Consignment | CON-301 |
-| `customerName` | Customer | Example Cargo |
-| `reason` | Decision details | See the inspection result recorded in the rail workflow. |
-
-Source workflow: `weighbridge-web-api/WeighBridgeWeAPI/Application/RAN/RailOrderDetail/WagonDecline.cs`.
-
-## weighbridge-equipment-approval-requested
-
-Equipment operation details have been submitted for approval.
-
-Applications: `weighbridge-api`.
-
-| Variable | Meaning | Example |
-|---|---|---|
-| `operationId` | Operation | EO-101 |
-| `vesselName` | Vessel | MV Example |
-| `workOrderId` | Work order | WO-1204 |
-| `submittedBy` | Submitted by | Example Operator |
-| `summary` | Operation details | Review equipment allocations and operating time. |
-
-Source workflow: `weighbridge-web-api/WeighBridgeWeAPI/Application/EquipmentOperations/EquipmentOperationDetails/SubmitEquipmentOperationDetailsToApproval.cs`.
-
 ## tan-tip-generated
 
 The truck details have been sent to customs and a TIP has been generated.
 
-Applications: `tan-webservice`.
+Source: `weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -368,13 +92,11 @@ Applications: `tan-webservice`.
 | `customerName` | Cargo owner | Example Cargo |
 | `declarationNumber` | Declaration | DEC-104 |
 
-Source workflow: `weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs`.
-
 ## tan-tip-payment-submitted
 
 The payment reference has been submitted to the bank for payment.
 
-Applications: `tan-webservice`.
+Source: `weighbridge-tan-webservice/Infrastructure/Services/StandardBank/StandardBankIntegratorService.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -392,13 +114,11 @@ Applications: `tan-webservice`.
 | `currency` | Currency | MZN |
 | `bankName` | Bank | Standard Bank |
 
-Source workflow: `weighbridge-tan-webservice/Infrastructure/Services/StandardBank/StandardBankIntegratorService.cs`.
-
 ## tan-tip-payment-confirmed
 
 The TIP payment has been confirmed by the bank.
 
-Applications: `tan-webservice`.
+Source: `weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -415,13 +135,11 @@ Applications: `tan-webservice`.
 | `amount` | Amount | 1,250.00 |
 | `currency` | Currency | MZN |
 
-Source workflow: `weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs`.
-
 ## tan-tip-payment-failed
 
 The bank reported that the TIP payment failed.
 
-Applications: `tan-webservice`.
+Source: `weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -439,13 +157,11 @@ Applications: `tan-webservice`.
 | `currency` | Currency | MZN |
 | `reason` | Bank failure reason | The bank rejected the payment reference. |
 
-Source workflow: `weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs`.
-
 ## tan-truck-release-requested
 
 The agent has submitted a truck release. Operations approval is still required.
 
-Applications: `tan-webservice`.
+Source: `weighbridge-tan-webservice/Application/Transactions/ReleaseTruckTransaction.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -464,13 +180,11 @@ Applications: `tan-webservice`.
 | `agentComment` | Agent comment | Supporting documents have been provided. |
 | `releasedAt` | Agent release submitted at | 09 Sep 2026 11:00 CAT |
 
-Source workflow: `weighbridge-tan-webservice/Application/Transactions/ReleaseTruckTransaction.cs`.
-
 ## tan-cbr-vessel-change-requested
 
 A vessel change has been requested for the cargo booking below.
 
-Applications: `tan-webservice`.
+Source: `weighbridge-tan-webservice/Application/CBR/UpdateCBRVessel/UpdateCBRVessel.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -484,13 +198,11 @@ Applications: `tan-webservice`.
 | `submittedBy` | Submitted by | Example Agent User |
 | `submittedAt` | Submitted at | 09 Sep 2026 10:00 CAT |
 
-Source workflow: `weighbridge-tan-webservice/Application/CBR/UpdateCBRVessel/UpdateCBRVessel.cs`.
-
 ## tan-sew-integration-failed
 
 A SEW integration operation failed.
 
-Applications: `tan-webservice`.
+Source: `weighbridge-tan-webservice/API/Workers/SewSFTP`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -500,13 +212,11 @@ Applications: `tan-webservice`.
 | `errorCode` | Error code | SEW-UPLOAD-FAILED |
 | `errorSummary` | Error summary | The remote service could not be reached. |
 
-Source workflow: `weighbridge-tan-webservice/API/Workers/SewSFTP`.
-
 ## weighbridge-ticket
 
 Please find attached the weighbridge ticket.
 
-Applications: `otc-api`, `weighbridge-api`, `tan-webservice`. **Attachment required.**
+Source: `weighbridge-tan-webservice/Infrastructure/Services/ReceiptTransactionNotification.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -517,13 +227,11 @@ Applications: `otc-api`, `weighbridge-api`, `tan-webservice`. **Attachment requi
 | `customerName` | Customer | Example Cargo |
 | `issuedAt` | Issued at | 09 Sep 2026 10:00 CAT |
 
-Source workflow: `otc-api/Infrastructure/Services/EmailService.cs; weighbridge-tan-webservice/API/Workers/SendTicketToTransporterJob.cs`.
-
 ## weighbridge-transactions-report
 
 Please find attached the weighbridge transactions report.
 
-Applications: `otc-api`, `weighbridge-api`, `tan-webservice`. **Attachment required.**
+Source: `weighbridge-tan-webservice/API/Workers/SendTicketToAgentsAndCustomersJob.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -533,13 +241,11 @@ Applications: `otc-api`, `weighbridge-api`, `tan-webservice`. **Attachment requi
 | `reportPeriod` | Reporting period | 01–09 Sep 2026 |
 | `generatedAt` | Generated at | 09 Sep 2026 10:00 CAT |
 
-Source workflow: `weighbridge-tan-webservice/API/Workers/SendTicketToAgentsAndCustomersJob.cs`.
-
 ## data-integrity-report
 
 Please find attached the data integrity report.
 
-Applications: `otc-api`, `weighbridge-api`, `tan-webservice`. **Attachment required.**
+Source: `weighbridge-tan-webservice/Infrastructure/Services/DataIntegrityService.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -548,13 +254,11 @@ Applications: `otc-api`, `weighbridge-api`, `tan-webservice`. **Attachment requi
 | `issueCount` | Issues found | 3 |
 | `summary` | Summary | Review the affected records listed in the report. |
 
-Source workflow: `weighbridge-tan-webservice/Infrastructure/Services/DataIntegrityService.cs; weighbridge-web-api/WeighBridgeWeAPI/Application/RAN/WagonsRequest/UpdateWagonsRequestShuntingData.cs`.
-
 ## tan-trips-history-report
 
 Please find attached the TAN trips history report for customs.
 
-Applications: `tan-webservice`. **Attachment required.**
+Source: `weighbridge-tan-webservice/API/Workers/SendTANTripsHistoryToCustomsJob.cs`.
 
 | Variable | Meaning | Example |
 |---|---|---|
@@ -562,61 +266,353 @@ Applications: `tan-webservice`. **Attachment required.**
 | `generatedAt` | Generated at | 09 Sep 2026 10:00 CAT |
 | `summary` | Summary | Completed trips for the reporting period. |
 
-Source workflow: `weighbridge-tan-webservice/API/Workers/SendTANTripsHistoryToCustomsJob.cs`.
+## tan-receipt-completed
 
-## Example request
+The truck has completed its receipt transaction.
 
-Authenticate as `tan-webservice` with the configured application credentials.
+Source: `weighbridge-tan-webservice/Infrastructure/Services/ReceiptTransactionNotification.cs`.
 
-```json
-{
-  "idempotencyKey": "tan:1204:tip-payment:confirmed:PAY-104",
-  "correlationId": "tan:1204",
-  "businessReference": "TAN-1204",
-  "to": [
-    {
-      "email": "transporter@example.com"
-    }
-  ],
-  "templateId": "tan-tip-payment-confirmed",
-  "variables": {
-    "registrationNumber": "AAA-123-MP",
-    "tanId": "TAN-1204",
-    "orderNumber": "ORD-204",
-    "transporterName": "Example Transporter",
-    "trailer1": "TRL-101",
-    "trailer2": "Not applicable",
-    "mineTicketNumber": "MT-204",
-    "customerName": "Example Cargo",
-    "declarationNumber": "DEC-104",
-    "paymentReference": "PAY-104",
-    "amount": "1,250.00",
-    "currency": "MZN"
-  }
-}
-```
+| Variable | Meaning | Example |
+|---|---|---|
+| `transactionId` | Receipt transaction | 12345 |
+| `orderNumber` | Order | ORD-204 |
+| `customerName` | Customer | Example Cargo |
+| `commodity` | Commodity | Coal |
+| `parcelNumber` | Parcel | PAR-102 |
+| `destination` | Destination | Terminal 1 |
+| `transporterName` | Transporter | Example Transporter |
+| `registrationNumber` | Truck | AAA-123-MP |
+| `trailer1` | Trailer 1 | TRL-101 |
+| `trailer2` | Trailer 2 | Not applicable |
+| `mineMassKg` | Mine mass (kg) | 30000 |
+| `mineTicketNumber` | Mine ticket | MT-204 |
+| `entryAt` | First weighing at | 11 Sep 2026 10:00 CAT |
+| `exitAt` | Second weighing at | 11 Sep 2026 10:30 CAT |
+| `grossKg` | Gross mass (kg) | 48000 |
+| `tareKg` | Tare mass (kg) | 18500 |
+| `nettKg` | Nett mass (kg) | 29500 |
 
-## Deployment and remaining work
+## tan-receipt-time-discrepancy
 
-Template files are explicitly copied to build and publish output. Apply the notification-service `RemoveTemplateVersion` migration before deploying this unversioned template implementation. It drops the obsolete template-version column; no migration has been applied automatically.
+The time between first and second weighing is below the configured minimum. Please review this transaction.
 
-Clients remain unchanged and will not automatically switch from their inline email bodies to these templates. Wiring events, recipients, variables, attachments and producer outboxes remains client-side work for a later task. No SMS or translated variants are included. Repeated-row/batch reports should be supplied as attachments; the renderer remains a scalar placeholder renderer. Dedicated FMS, rental, induction and other less common OTC approval variants can be added separately.
+Source: `weighbridge-tan-webservice/Infrastructure/Services/ReceiptTransactionNotification.cs`.
 
-The referenced Rider `console.sql` contains only `SELECT * FROM OutboxMessages`; it was read but not executed or changed.
+| Variable | Meaning | Example |
+|---|---|---|
+| `transactionId` | Receipt transaction | 12345 |
+| `orderNumber` | Order | ORD-204 |
+| `customerName` | Customer | Example Cargo |
+| `commodity` | Commodity | Coal |
+| `parcelNumber` | Parcel | PAR-102 |
+| `destination` | Destination | Terminal 1 |
+| `transporterName` | Transporter | Example Transporter |
+| `registrationNumber` | Truck | AAA-123-MP |
+| `trailer1` | Trailer 1 | TRL-101 |
+| `trailer2` | Trailer 2 | Not applicable |
+| `mineMassKg` | Mine mass (kg) | 30000 |
+| `mineTicketNumber` | Mine ticket | MT-204 |
+| `entryAt` | First weighing at | 11 Sep 2026 10:00 CAT |
+| `exitAt` | Second weighing at | 11 Sep 2026 10:30 CAT |
+| `grossKg` | Gross mass (kg) | 48000 |
+| `tareKg` | Tare mass (kg) | 18500 |
+| `nettKg` | Nett mass (kg) | 29500 |
+| `elapsedMinutes` | Elapsed time (minutes) | 3 |
+| `minimumMinutes` | Minimum time (minutes) | 5 |
 
-## Verification
+## tan-receipt-nett-deviation
 
-- 173 tests pass across the runnable suite: Application 82, Domain 17, Infrastructure 57, Persistence 9, and SQLite API integration 8.
-- All 28 templates render from their documented example variables. Every required variable is individually tested for omission.
-- API checks exercise each template against all three application identities, reject cross-application use, and require real document references for the six report/ticket templates. Inline resources do not satisfy the document requirement.
-- Renderer tests cover HTML encoding, nonrecursive placeholder substitution, empty values, unknown template IDs, path traversal and compatibility with the existing payment template.
-- Release publish succeeds; all 115 template files (including the existing payment template) were compared byte-for-byte with the published output.
-- Existing SQL Server container tests remain excluded because Docker is not running. No live email sends or database updates were performed.
+The absolute difference between mine mass and nett mass exceeds the customer notification threshold.
 
-## Unversioned template behavior
+Source: `weighbridge-tan-webservice/Infrastructure/Services/ReceiptTransactionNotification.cs`.
 
-Templates now live directly at `Api/Templates/<template-id>/` with `subject.txt`, `body.html`, `body.txt`, and optional `metadata.json`. Requests contain only the template ID and variables. Legacy incoming `templateVersion` JSON properties are ignored, and previously persisted request fingerprints remain compatible through comparison with durable request content. New outgoing events omit that property. Kafka contract/schema versions and API route versions are unchanged.
+| Variable | Meaning | Example |
+|---|---|---|
+| `transactionId` | Receipt transaction | 12345 |
+| `orderNumber` | Order | ORD-204 |
+| `customerName` | Customer | Example Cargo |
+| `commodity` | Commodity | Coal |
+| `parcelNumber` | Parcel | PAR-102 |
+| `destination` | Destination | Terminal 1 |
+| `transporterName` | Transporter | Example Transporter |
+| `registrationNumber` | Truck | AAA-123-MP |
+| `trailer1` | Trailer 1 | TRL-101 |
+| `trailer2` | Trailer 2 | Not applicable |
+| `mineMassKg` | Mine mass (kg) | 30000 |
+| `mineTicketNumber` | Mine ticket | MT-204 |
+| `entryAt` | First weighing at | 11 Sep 2026 10:00 CAT |
+| `exitAt` | Second weighing at | 11 Sep 2026 10:30 CAT |
+| `grossKg` | Gross mass (kg) | 48000 |
+| `tareKg` | Tare mass (kg) | 18500 |
+| `nettKg` | Nett mass (kg) | 29500 |
+| `deviationKg` | Absolute deviation (kg) | 500 |
+| `thresholdKg` | Customer threshold (kg) | 300 |
 
-Scheduled deliveries and manual replays render the current file contents for their template ID. Updating a template therefore affects pending and replayed notifications; there is no historical template selection or rendered-content snapshot. Deploy into a clean publish directory to remove obsolete version folders.
+## tan-data-integrity-report-link
 
-The migration only removes `EmailNotifications.TemplateVersion`; it preserves notification content, status, IDs and outbox messages. A downgrade restores version 1 for templates and 0 for raw messages; historical version numbers cannot be recovered from the dropped column.
+The data integrity results are available at the report address below.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/DataIntegrityService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `scope` | Scope and order or parcel reference | Receipt order ORD-204 |
+| `reportUrl` | Report address | https://reports.example.com/integrity/204 |
+
+## tan-agent-allocation
+
+A TAN has been allocated to your console. Please allocate the correct order.
+
+Source: `weighbridge-tan-webservice/Application/Tan/ChangeTanAgent.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `tanId` | TAN | TAN-1204 |
+| `agentName` | Receiving agent | Example Agent |
+| `previousAgentName` | Allocating agent | Previous Agent |
+| `registrationNumber` | Truck | AAA-123-MP |
+| `trailer1` | Trailer 1 | TRL-101 |
+| `trailer2` | Trailer 2 | Not applicable |
+
+## tan-driver-details
+
+Please review the driver details and existing valid declarations for this truck.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/TanService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `tanId` | TAN | TAN-1204 |
+| `registrationNumber` | Truck | AAA-123-MP |
+| `transporterName` | Transporter | Example Transporter |
+| `driverName` | Driver | Example Driver |
+| `driverPassport` | Driver passport | EXAMPLE-123 |
+| `driverContact` | Driver contact | Not provided |
+| `truckDetails` | Trailer, order and customer details | Trailer TRL-101; order ORD-204; customer Example Cargo |
+| `validDeclarations` | Valid declarations and expiry dates | DEC-104; expires 20 Sep 2026 |
+
+## tan-border-arrival-driver-conflict
+
+Border arrival has been confirmed. The same driver is associated with other TAN records; review the details below.
+
+Source: `weighbridge-tan-webservice/Application/Tan/UpdateTanBorderArrivalTime.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `tanId` | TAN | TAN-1204 |
+| `registrationNumber` | Arriving truck | AAA-123-MP |
+| `borderArrivalAt` | Border arrival at | 11 Sep 2026 10:00 CAT |
+| `driverName` | Driver | Example Driver |
+| `driverPassport` | Driver passport | EXAMPLE-123 |
+| `otherTrucks` | Other TANs and truck details | TAN-1203; BBB-456-MP |
+
+## tan-truck-details-missing
+
+The truck has arrived at the border, but its details could not be found for TIP generation. Send the truck details to MPDC or update them in TAN.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/SewTanUploaderService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `registrationNumber` | Truck | AAA-123-MP |
+| `borderArrivalAt` | Border arrival at | 11 Sep 2026 10:00 CAT |
+
+## tan-sew-trucks-uploaded
+
+The following truck details have been uploaded to SEW for customs processing.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/SewTanUploaderService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `transporterName` | Transporter | Example Transporter |
+| `truckDetails` | TAN, truck, trailer, order and driver details | TAN-1204; AAA-123-MP; TRL-101; ORD-204; Example Driver |
+
+## tan-tip-batch-generated
+
+Review the generated TIP declarations and payment instructions below.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs; weighbridge-tan-webservice/Application/Sew/Payments/PostSewIntegrationPayment.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `transporterName` | Transporter | Example Transporter |
+| `paymentInstructions` | Payment requirement and instructions | Payment required; use the reference below. |
+| `tipDetails` | TANs, trucks, declarations, payment references, amounts and expiry dates | TAN-1204; AAA-123-MP; DEC-104; PAY-104; MZN 1250.00; expires 20 Sep 2026 |
+
+## tan-duplicate-declarations
+
+Duplicate records were received. Please review the affected records before further processing.
+
+Source: `weighbridge-tan-webservice/API/Workers/SewSFTP/SewSuccessWorker.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `sourceReference` | Source file or request reference | incoming-104.xml |
+| `duplicateDetails` | Duplicate identifiers and associated truck, TAN and declaration details | TAN-1204; AAA-123-MP; DEC-104; PAY-104 |
+
+## tan-duplicate-payment-references
+
+Duplicate records were received. Please review the affected records before further processing.
+
+Source: `weighbridge-tan-webservice/API/Workers/SewSFTP/SewDeclarationWorker.cs; weighbridge-tan-webservice/Application/Sew/Payments/PostSewIntegrationPayment.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `sourceReference` | Source file or request reference | incoming-104.xml |
+| `duplicateDetails` | Duplicate identifiers and associated truck, TAN and declaration details | TAN-1204; AAA-123-MP; DEC-104; PAY-104 |
+
+## tan-sew-response-errors
+
+SEW returned errors for the records below. Review and correct the affected truck details.
+
+Source: `weighbridge-tan-webservice/API/Workers/SewSFTP/SewIntegrationErrorsDownloadWorker.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `fileName` | Response file | response-104.xml |
+| `errorDetails` | Errors and associated TAN, truck and transporter details | TAN-1204; AAA-123-MP; invalid declaration details |
+
+## tan-import-result
+
+The import has completed with the results below. Review unsuccessful records before submitting them again.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/TanService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `fileName` | Import file | tans-20260911.xlsx |
+| `successDetails` | Successfully imported records | TAN-1204; AAA-123-MP |
+| `errorDetails` | Rejected records and reasons | Row 3: missing order number |
+
+## tan-operational-failure
+
+An operation could not be completed. Please investigate the details below.
+
+Source: `weighbridge-tan-webservice/API/Workers; weighbridge-tan-webservice/Infrastructure/Services/GateOneService.cs; weighbridge-tan-webservice/Infrastructure/Services/Sftp/SftpService.cs; weighbridge-tan-webservice/Infrastructure/Services/DeleteLocalFile/DeleteLocalFileService.cs; weighbridge-tan-webservice/Infrastructure/Services/Km4and7/Km4And7ProcessService.cs; weighbridge-tan-webservice/Infrastructure/Services/StandardBank/StandardBankIntegratorService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `operation` | Worker or operation | Receipt ticket delivery |
+| `reference` | Affected business or file reference | Receipt 12345 |
+| `errorSummary` | Failure details safe for email | The report server could not be reached. |
+
+## tan-wagons-submitted
+
+Wagons have been submitted for the rail order below.
+
+Source: `weighbridge-tan-webservice/Application/RAN/SubmitWagons.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `orderNumber` | Rail order | RAIL-204 |
+| `consignmentNumber` | Consignment | CON-104 |
+| `wagonDetails` | Wagon numbers, cargo, customer, masses and operation details | WG-101; Coal; Example Cargo; nett 60000 kg |
+| `changedBy` | Submitted or changed by | Example Agent |
+
+## tan-wagons-updated
+
+A wagon on the consignment has been updated. Review the current details below.
+
+Source: `weighbridge-tan-webservice/Application/RAN/UpdateRailOrderDetail.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `orderNumber` | Rail order | RAIL-204 |
+| `consignmentNumber` | Consignment | CON-104 |
+| `wagonDetails` | Wagon numbers, cargo, customer, masses and operation details | WG-101; Coal; Example Cargo; nett 60000 kg |
+| `changedBy` | Submitted or changed by | Example Agent |
+
+## tan-wagons-deleted
+
+A wagon has been removed from the consignment.
+
+Source: `weighbridge-tan-webservice/Application/RAN/DeleteRailOrderDetail.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `orderNumber` | Rail order | RAIL-204 |
+| `consignmentNumber` | Consignment | CON-104 |
+| `wagonDetails` | Wagon numbers, cargo, customer, masses and operation details | WG-101; Coal; Example Cargo; nett 60000 kg |
+| `changedBy` | Submitted or changed by | Example Agent |
+
+## tan-account-created
+
+Your MPDC Cargo Booking account has been created. Change your password after logging in.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/UserService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `fullName` | Account holder | Example User |
+| `username` | Username | example.user |
+| `password` | Initial or reset password (sensitive) | EXAMPLE-ONLY-ChangeMe |
+| `loginUrl` | Cargo Booking address | https://tan.portmaputo.com |
+
+## tan-account-reset
+
+Your MPDC Cargo Booking account has been reset. Change your password after logging in.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/UserService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `fullName` | Account holder | Example User |
+| `username` | Username | example.user |
+| `password` | Initial or reset password (sensitive) | EXAMPLE-ONLY-ChangeMe |
+| `loginUrl` | Cargo Booking address | https://tan.portmaputo.com |
+
+## tan-agent-account-notification
+
+Your MPDC Cargo Booking account details are below. Change your password after logging in.
+
+Source: `weighbridge-tan-webservice/Application/User/NotifyAgentAccounts.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `fullName` | Account holder | Example User |
+| `username` | Username | example.user |
+| `password` | Initial or reset password (sensitive) | EXAMPLE-ONLY-ChangeMe |
+| `loginUrl` | Cargo Booking address | https://tan.portmaputo.com |
+
+## tan-cbr-status-notification
+
+Review the cargo booking request status below.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/EmailService.cs; weighbridge-tan-webservice/Infrastructure/Cbr/CbrService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `cbrId` | Cargo booking request | CBR-104 |
+| `status` | Booking status | Submitted |
+| `customerName` | Customer | Example Cargo |
+| `bookingDetails` | Vessel, cargo, quantity and booking details | MV Example; Coal; 1000 tonnes |
+| `nextSteps` | Required follow-up | Review the booking in Cargo Booking. |
+
+## tan-message
+
+Please review the message below.
+
+Source: `weighbridge-tan-webservice/API/Controllers/EmailController.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `title` | Message title | TAN notification |
+| `message` | Message in plain text | Please review TAN-1204. |
+
+## payment-confirmed
+
+Your payment has been confirmed.
+
+Source: `weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs`.
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `customerName` | Customer | Example Cargo |
+| `paymentReference` | Payment reference | PAY-104 |
+
+## tan-truck-release-operations-review
+
+Operations-only version of `tan-truck-release-requested`. Uses the same variables plus required `tallyUrl` (the Operations review address, displayed as text). No attachment required. The truck remains blocked pending an Operations decision.
+
+Source: `weighbridge-tan-webservice/Application/Transactions/ReleaseTruckTransaction.cs`.

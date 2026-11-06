@@ -1,0 +1,31 @@
+{
+  "id": "tan-cbr-status-notification",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Cargo booking status notification",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/EmailService.cs; weighbridge-tan-webservice/Infrastructure/Cbr/CbrService.cs",
+  "variables": {
+    "cbrId": {
+      "description": "Cargo booking request",
+      "example": "CBR-104"
+    },
+    "status": {
+      "description": "Booking status",
+      "example": "Submitted"
+    },
+    "customerName": {
+      "description": "Customer",
+      "example": "Example Cargo"
+    },
+    "bookingDetails": {
+      "description": "Vessel, cargo, quantity and booking details",
+      "example": "MV Example; Coal; 1000 tonnes"
+    },
+    "nextSteps": {
+      "description": "Required follow-up",
+      "example": "Review the booking in Cargo Booking."
+    }
+  }
+}

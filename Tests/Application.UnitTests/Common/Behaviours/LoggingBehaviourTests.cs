@@ -1,6 +1,5 @@
 using Application.Common.Behaviours;
-using Application.Common.Security;
-using Application.UnitTests.Common;
+using Application.Notifications.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -15,10 +14,10 @@ public class LoggingBehaviourTests
     public async Task Handle_calls_next_and_returns_its_result()
     {
         var logger = new FakeLogger<LoggingBehaviour<SampleRequest, string>>();
-        var currentUserService = Substitute.For<ICurrentUserService>();
-        currentUserService.UserId.Returns("42");
+        var caller = Substitute.For<INotificationCaller>();
+        caller.ApplicationId.Returns("tan-webservice");
 
-        var behaviour = new LoggingBehaviour<SampleRequest, string>(logger, currentUserService);
+        var behaviour = new LoggingBehaviour<SampleRequest, string>(logger, caller);
 
         var result = await behaviour.Handle(new SampleRequest(), _ => Task.FromResult("response"), CancellationToken.None);
 
@@ -29,10 +28,10 @@ public class LoggingBehaviourTests
     public async Task Handle_logs_at_information_level()
     {
         var logger = new FakeLogger<LoggingBehaviour<SampleRequest, string>>();
-        var currentUserService = Substitute.For<ICurrentUserService>();
-        currentUserService.UserId.Returns("42");
+        var caller = Substitute.For<INotificationCaller>();
+        caller.ApplicationId.Returns("tan-webservice");
 
-        var behaviour = new LoggingBehaviour<SampleRequest, string>(logger, currentUserService);
+        var behaviour = new LoggingBehaviour<SampleRequest, string>(logger, caller);
 
         await behaviour.Handle(new SampleRequest(), _ => Task.FromResult("response"), CancellationToken.None);
 
@@ -40,13 +39,13 @@ public class LoggingBehaviourTests
     }
 
     [Fact]
-    public async Task Handle_falls_back_to_anonymous_when_there_is_no_current_user()
+    public async Task Handle_falls_back_to_anonymous_when_there_is_no_calling_application()
     {
         var logger = new FakeLogger<LoggingBehaviour<SampleRequest, string>>();
-        var currentUserService = Substitute.For<ICurrentUserService>();
-        currentUserService.UserId.Returns((string?)null);
+        var caller = Substitute.For<INotificationCaller>();
+        caller.ApplicationId.Returns("");
 
-        var behaviour = new LoggingBehaviour<SampleRequest, string>(logger, currentUserService);
+        var behaviour = new LoggingBehaviour<SampleRequest, string>(logger, caller);
 
         var result = await behaviour.Handle(new SampleRequest(), _ => Task.FromResult("response"), CancellationToken.None);
 

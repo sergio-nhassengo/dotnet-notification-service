@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Application.Common.Security;
 using Application.Features.Notifications.Commands.CreateEmail;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +23,6 @@ public class NotificationApiTests(ApiWebApplicationFactory factory) : IClassFixt
             templateId = "payment-confirmed",
             variables = new Dictionary<string, string> { { "customerName", "Customer" }, { "paymentReference", "PAY-123" } },
             subject = (string?)null,
-            scheduledAt = (DateTimeOffset?)null
         };
         var first = await client.PostAsJsonAsync("/api/v1/notifications/email", request);
         var second = await client.PostAsJsonAsync("/api/v1/notifications/email", request);
@@ -46,18 +44,8 @@ public class NotificationApiTests(ApiWebApplicationFactory factory) : IClassFixt
 
     private HttpClient AuthorizedClient()
     {
-        using var scope = factory.Services.CreateScope(); var generator = scope.ServiceProvider.GetRequiredService<IJwtTokenGenerator>();
-        var user = new User
-        {
-            Id = 99,
-            Email = "admin@example.com",
-            UserName = "admin",
-            FirstName = "Admin",
-            LastName = "User",
-            RoleId = 1,
-            Role = new Role { Id = 1, Name = "Admin" }
-        };
-        var client = factory.CreateClient(); client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", generator.GenerateToken(user).Token);
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("ApiKey", "otc-api.test-secret");
         return client;
     }
 }

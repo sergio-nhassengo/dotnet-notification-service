@@ -1,6 +1,5 @@
 using Application.Common.Behaviours;
-using Application.Common.Security;
-using Application.UnitTests.Common;
+using Application.Notifications.Abstractions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -14,10 +13,10 @@ public class PerformanceBehaviourTests
     private static (PerformanceBehaviour<SampleRequest, string> Behaviour, FakeLogger<PerformanceBehaviour<SampleRequest, string>> Logger) CreateBehaviour()
     {
         var logger = new FakeLogger<PerformanceBehaviour<SampleRequest, string>>();
-        var currentUserService = Substitute.For<ICurrentUserService>();
-        currentUserService.UserId.Returns("42");
+        var caller = Substitute.For<INotificationCaller>();
+        caller.ApplicationId.Returns("tan-webservice");
 
-        return (new PerformanceBehaviour<SampleRequest, string>(logger, currentUserService), logger);
+        return (new PerformanceBehaviour<SampleRequest, string>(logger, caller), logger);
     }
 
     [Fact]

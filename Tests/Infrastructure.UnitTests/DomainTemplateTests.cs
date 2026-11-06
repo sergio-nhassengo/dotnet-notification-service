@@ -1,7 +1,8 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Infrastructure.Notifications;
+using Application.Notifications.Abstractions;
 using Infrastructure.Notifications.Options;
+using Infrastructure.Notifications.Templates;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -46,14 +47,14 @@ public sealed class DomainTemplateTests
     {
         var variables = new Dictionary<string, string>
         {
-            ["requestId"] = "<script>alert(1)</script>", ["vesselName"] = "{{workOrderId}}",
-            ["workOrderId"] = "DO-NOT-SUBSTITUTE", ["agentName"] = "A & B"
+            ["consignmentNumber"] = "<script>alert(1)</script>", ["message"] = "{{requestedBy}}",
+            ["requestedBy"] = "A & B"
         };
-        var rendered = await Renderer().RenderAsync("otc-additional-cargo-requested", variables, default);
+        var rendered = await Renderer().RenderAsync("rail-consignment-alert", variables, default);
         Assert.DoesNotContain("<script>", rendered.HtmlBody);
         Assert.Contains("&lt;script&gt;alert(1)&lt;/script&gt;", rendered.HtmlBody);
-        Assert.Contains("{{workOrderId}}", rendered.HtmlBody);
-        Assert.Contains("{{workOrderId}}", rendered.TextBody);
+        Assert.Contains("{{requestedBy}}", rendered.HtmlBody);
+        Assert.Contains("{{requestedBy}}", rendered.TextBody);
         Assert.Contains("A &amp; B", rendered.HtmlBody);
     }
 
@@ -71,7 +72,7 @@ public sealed class DomainTemplateTests
     }
 
     [Fact]
-    public async Task Existing_payment_template_still_renders_without_metadata()
+    public async Task Basic_payment_template_still_renders()
     {
         var rendered = await Renderer().RenderAsync("payment-confirmed", new Dictionary<string, string>
         { ["customerName"] = "Ada", ["paymentReference"] = "PAY-1" }, default);

@@ -1,0 +1,43 @@
+{
+  "id": "tan-driver-details",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Truck driver details",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/TanService.cs",
+  "variables": {
+    "tanId": {
+      "description": "TAN",
+      "example": "TAN-1204"
+    },
+    "registrationNumber": {
+      "description": "Truck",
+      "example": "AAA-123-MP"
+    },
+    "transporterName": {
+      "description": "Transporter",
+      "example": "Example Transporter"
+    },
+    "driverName": {
+      "description": "Driver",
+      "example": "Example Driver"
+    },
+    "driverPassport": {
+      "description": "Driver passport",
+      "example": "EXAMPLE-123"
+    },
+    "driverContact": {
+      "description": "Driver contact",
+      "example": "Not provided"
+    },
+    "truckDetails": {
+      "description": "Trailer, order and customer details",
+      "example": "Trailer TRL-101; order ORD-204; customer Example Cargo"
+    },
+    "validDeclarations": {
+      "description": "Valid declarations and expiry dates",
+      "example": "DEC-104; expires 20 Sep 2026"
+    }
+  }
+}

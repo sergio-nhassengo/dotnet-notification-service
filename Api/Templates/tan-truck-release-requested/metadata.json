@@ -3,7 +3,7 @@
   "applications": [
     "tan-webservice"
   ],
-  "title": "Truck release awaiting Operations review",
+  "title": "Tan truck release requested",
   "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Application/Transactions/ReleaseTruckTransaction.cs",
   "variables": {

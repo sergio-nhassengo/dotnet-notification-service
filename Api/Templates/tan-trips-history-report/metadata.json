@@ -3,13 +3,13 @@
   "applications": [
     "tan-webservice"
   ],
-  "title": "TAN trips history for customs",
+  "title": "Tan trips history report",
   "minimumAttachments": 1,
   "source": "weighbridge-tan-webservice/API/Workers/SendTANTripsHistoryToCustomsJob.cs",
   "variables": {
     "reportPeriod": {
       "description": "Reporting period",
-      "example": "01–09 Sep 2026"
+      "example": "01\u201309 Sep 2026"
     },
     "generatedAt": {
       "description": "Generated at",

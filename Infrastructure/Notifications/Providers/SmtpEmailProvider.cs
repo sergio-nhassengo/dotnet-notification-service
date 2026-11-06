@@ -1,24 +1,14 @@
-using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
-using Application.Common.Email;
-using Application.Notifications.Integration;
+using System.Net;
+using Application.Notifications.Abstractions;
 using Application.Notifications.Models;
 using Domain.Enums;
+using Infrastructure.Notifications.Options;
 using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Notifications.Providers;
 
-public sealed class SmtpOptions
-{
-    public string Host { get; set; } = "";
-    public int Port { get; set; } = 25;
-    public bool EnableSsl { get; set; } = true;
-    public bool UseDefaultCredentials { get; set; }
-    public string? Username { get; set; }
-    public string? Password { get; set; }
-    public int TimeoutSeconds { get; set; } = 30;
-}
 public sealed class SmtpEmailProvider(IOptions<SmtpOptions> options) : IEmailProvider
 {
     public string Name => "Smtp";
@@ -36,7 +26,7 @@ public sealed class SmtpEmailProvider(IOptions<SmtpOptions> options) : IEmailPro
         try
         {
             await client.SendMailAsync(message, timeout.Token);
-            return EmailProviderResult.Success(email.MessageId.ToString());
+            return EmailProviderResult.Success();
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
@@ -59,8 +49,6 @@ public sealed class SmtpEmailProvider(IOptions<SmtpOptions> options) : IEmailPro
             message.To.Add(new MailAddress(recipient.Email, recipient.Name));
         foreach (var recipient in email.Cc) 
             message.CC.Add(new MailAddress(recipient.Email, recipient.Name));
-        if (email.ReplyTo is not null) 
-            message.ReplyToList.Add(email.ReplyTo);
         message.Headers.Add("X-Notification-Id", email.MessageId.ToString());
         message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(email.TextBody, System.Text.Encoding.UTF8, MediaTypeNames.Text.Plain));
         var html = AlternateView.CreateAlternateViewFromString(email.HtmlBody, System.Text.Encoding.UTF8, MediaTypeNames.Text.Html);

@@ -1,0 +1,9 @@
+MPDC TAN / Cargo Booking
+Payment confirmed
+
+Your payment has been confirmed.
+
+Customer: {{customerName}}
+Payment reference: {{paymentReference}}
+
+This is an automated notification. Please do not reply.

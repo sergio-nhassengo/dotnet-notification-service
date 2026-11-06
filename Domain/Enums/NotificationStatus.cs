@@ -4,13 +4,10 @@ public enum NotificationStatus
 {
     Pending,
     Queued,
-    Processing,
-    RetryScheduled,
+    RetryScheduled = 3,
     Sent,
     PermanentlyFailed,
     DeadLettered
 }
 
-public enum NotificationSource { RestApi, Kafka }
-public enum DeliveryOutcome { Succeeded, TransientFailure, PermanentFailure, RateLimited, ConfigurationFailure }
 public enum EmailFailureCategory { None, Transient, Permanent, RateLimited, Configuration }

@@ -1,1 +1,1 @@
-Weighbridge - Ticket {{ticketId}} - {{registrationNumber}}
+Weighbridge ticket — {{ticketId}}

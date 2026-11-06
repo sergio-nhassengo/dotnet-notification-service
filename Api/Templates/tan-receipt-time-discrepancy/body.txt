@@ -1,0 +1,26 @@
+MPDC TAN / Cargo Booking
+Receipt weighing time discrepancy
+
+The time between first and second weighing is below the configured minimum. Please review this transaction.
+
+Receipt transaction: {{transactionId}}
+Order: {{orderNumber}}
+Customer: {{customerName}}
+Commodity: {{commodity}}
+Parcel: {{parcelNumber}}
+Destination: {{destination}}
+Transporter: {{transporterName}}
+Truck: {{registrationNumber}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+Mine mass (kg): {{mineMassKg}}
+Mine ticket: {{mineTicketNumber}}
+First weighing at: {{entryAt}}
+Second weighing at: {{exitAt}}
+Gross mass (kg): {{grossKg}}
+Tare mass (kg): {{tareKg}}
+Nett mass (kg): {{nettKg}}
+Elapsed time (minutes): {{elapsedMinutes}}
+Minimum time (minutes): {{minimumMinutes}}
+
+This is an automated notification. Please do not reply.

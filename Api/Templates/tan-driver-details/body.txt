@@ -1,0 +1,15 @@
+MPDC TAN / Cargo Booking
+Truck driver details
+
+Please review the driver details and existing valid declarations for this truck.
+
+TAN: {{tanId}}
+Truck: {{registrationNumber}}
+Transporter: {{transporterName}}
+Driver: {{driverName}}
+Driver passport: {{driverPassport}}
+Driver contact: {{driverContact}}
+Trailer, order and customer details: {{truckDetails}}
+Valid declarations and expiry dates: {{validDeclarations}}
+
+This is an automated notification. Please do not reply.

@@ -1,13 +1,11 @@
 {
   "id": "data-integrity-report",
   "applications": [
-    "otc-api",
-    "weighbridge-api",
     "tan-webservice"
   ],
   "title": "Data integrity report",
   "minimumAttachments": 1,
-  "source": "weighbridge-tan-webservice/Infrastructure/Services/DataIntegrityService.cs; weighbridge-web-api/WeighBridgeWeAPI/Application/RAN/WagonsRequest/UpdateWagonsRequestShuntingData.cs",
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/DataIntegrityService.cs",
   "variables": {
     "scope": {
       "description": "Scope",

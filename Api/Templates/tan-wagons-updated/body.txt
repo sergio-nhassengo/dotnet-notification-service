@@ -1,0 +1,11 @@
+MPDC TAN / Cargo Booking
+Rail wagons updated
+
+A wagon on the consignment has been updated. Review the current details below.
+
+Rail order: {{orderNumber}}
+Consignment: {{consignmentNumber}}
+Wagon numbers, cargo, customer, masses and operation details: {{wagonDetails}}
+Submitted or changed by: {{changedBy}}
+
+This is an automated notification. Please do not reply.

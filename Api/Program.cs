@@ -1,18 +1,17 @@
 using Application;
-using MPDCApiTemplate.Development;
+using Infrastructure.Extensions.Logs;
+using Infrastructure;
+using MPDCApiTemplate.Authentication;
+using MPDCApiTemplate.Cors;
 using MPDCApiTemplate.ExceptionHandlers;
 using MPDCApiTemplate.OpenApi;
-using Infrastructure;
-using Infrastructure.Extensions.Cors;
-using Infrastructure.Extensions.Logs;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Persistence;
-using Serilog;
-using Serilog.Events;
 using Serilog.Formatting.Json;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,12 +20,14 @@ builder.Host.UseSerilog((context, _, loggerConfiguration) =>
     writeToProviders: true);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<ApiKeySecuritySchemeTransformer>());
 
 builder.Services
     .AddApplication()
     .AddPersistence(builder.Configuration)
-    .AddInfra(builder.Configuration);
+    .AddInfra(builder.Configuration)
+    .AddApiKeyAuthentication()
+    .AddApiCors(builder.Configuration);
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -34,14 +35,13 @@ builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>("data
 
 var app = builder.Build();
 
-if (builder.Configuration["Database:Provider"]?.Equals("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+if (app.Environment.IsDevelopment())
 {
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();
 }
 
-await DevelopmentAccountSeeder.SeedAsync(app);
 
 app.MapOpenApi().WithMetadata(new AllowAnonymousAttribute());
 app.MapGet("/", () => Results.Redirect("swagger")).AllowAnonymous().ExcludeFromDescription();

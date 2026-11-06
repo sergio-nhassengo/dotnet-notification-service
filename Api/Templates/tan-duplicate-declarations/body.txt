@@ -1,0 +1,9 @@
+MPDC TAN / Cargo Booking
+Duplicate SEW declarations
+
+Duplicate records were received. Please review the affected records before further processing.
+
+Source file or request reference: {{sourceReference}}
+Duplicate identifiers and associated truck, TAN and declaration details: {{duplicateDetails}}
+
+This is an automated notification. Please do not reply.

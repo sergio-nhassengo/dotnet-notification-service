@@ -1,4 +1,5 @@
-TIP generated
+MPDC TAN / Cargo Booking
+Tan tip generated
 
 The truck details have been sent to customs and a TIP has been generated.
 
@@ -12,4 +13,4 @@ Mine ticket: {{mineTicketNumber}}
 Cargo owner: {{customerName}}
 Declaration: {{declarationNumber}}
 
-Review the declaration and any payment requirements in TAN. TIP generation alone does not confirm payment.
+This is an automated notification. Please do not reply.

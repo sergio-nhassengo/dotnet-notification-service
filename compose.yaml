@@ -10,11 +10,12 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ConnectionStrings__Default: ${DB_CONNECTION_STRING:-Data Source=/app/data/mpdca-development.db}
       ConnectionStrings__Logging: ${LOGGING_DB_CONNECTION_STRING:-}
-      Jwt__SigningKey: ${JWT_SIGNING_KEY:-dev-only-signing-key-do-not-use-in-production-min-32-chars}
       Kafka__BootstrapServers: ${KAFKA_BOOTSTRAP_SERVERS:-kafka-1:9092,kafka-2:9092,kafka-3:9092}
-      EmailProvider__Provider: ${EMAIL_PROVIDER:-Fake}
-      EmailProvider__ApiKey: ${BREVO_API_KEY:-}
-      EmailProvider__DefaultSenderEmail: ${EMAIL_SENDER_ADDRESS:-no-reply@example.invalid}
+      EmailProvider__Provider: ${EMAIL_PROVIDER:-SmtpRelay}
+      NotificationAttachments__RetentionDays: ${ATTACHMENT_RETENTION_DAYS:-7}
+      SmtpRelay__Username: ${SMTP_RELAY_USERNAME:-}
+      SmtpRelay__Password: ${SMTP_RELAY_PASSWORD:-}
+      SmtpRelay__CreatedBy: ${SMTP_RELAY_CREATED_BY:-}
     networks:
       - default
       - kafka

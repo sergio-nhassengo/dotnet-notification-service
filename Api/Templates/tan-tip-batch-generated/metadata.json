@@ -1,0 +1,23 @@
+{
+  "id": "tan-tip-batch-generated",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "TIP generation notification",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs; weighbridge-tan-webservice/Application/Sew/Payments/PostSewIntegrationPayment.cs",
+  "variables": {
+    "transporterName": {
+      "description": "Transporter",
+      "example": "Example Transporter"
+    },
+    "paymentInstructions": {
+      "description": "Payment requirement and instructions",
+      "example": "Payment required; use the reference below."
+    },
+    "tipDetails": {
+      "description": "TANs, trucks, declarations, payment references, amounts and expiry dates",
+      "example": "TAN-1204; AAA-123-MP; DEC-104; PAY-104; MZN 1250.00; expires 20 Sep 2026"
+    }
+  }
+}

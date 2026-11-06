@@ -18,6 +18,7 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLi
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Testing");
         builder.ConfigureAppConfiguration((_, config) =>
         {
             // The container's mapped port is only known once it has started, so this factory
@@ -25,10 +26,19 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLi
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Database:Provider"] = "SqlServer",
+                // This tenant exists only in the SQL integration test host.
+                ["NotificationIntegration:Applications:otc-api:SenderEmail"] = "test@example.com",
+                ["NotificationIntegration:Applications:otc-api:AllowRawContent"] = "true",
+                ["NotificationIntegration:Applications:otc-api:AllowSubjectOverride"] = "true",
+                ["NotificationIntegration:Applications:otc-api:AllowedTemplateIds:0"] = "payment-confirmed",
+                ["NotificationIntegration:Applications:otc-api:ApiKeySha256"] = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("test-secret"))),
                 ["ConnectionStrings:Default"] = _dbContainer.GetConnectionString(),
-                ["ConnectionStrings:Logging"] = string.Empty
-                ,
-                ["OpenTelemetry:Otlp:Endpoint"] = string.Empty
+                ["ConnectionStrings:Logging"] = string.Empty,
+                // The base appsettings select SmtpRelay without credentials, which fails startup
+                // options validation. Delivery workers are removed below, so nothing is ever sent.
+                ["EmailProvider:Provider"] = "Smtp",
+                ["Smtp:Host"] = "localhost",
+                ["Kafka:Enabled"] = "false",
             });
         });
         builder.ConfigureServices(services =>
@@ -42,7 +52,7 @@ public class ApiWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLi
             var workerTypes = new HashSet<Type>
             {
                 typeof(OutboxPublisherWorker), typeof(KafkaEmailConsumerWorker),
-                typeof(EmailDeliveryWorker), typeof(OutboxCleanupWorker)
+                typeof(EmailDeliveryWorker), typeof(OutboxCleanupWorker), typeof(AttachmentCleanupWorker)
             };
             foreach (var descriptor in services.Where(x => x.ServiceType == typeof(IHostedService) &&
                          x.ImplementationType is not null && workerTypes.Contains(x.ImplementationType)).ToArray())

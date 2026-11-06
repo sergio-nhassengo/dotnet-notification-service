@@ -1,0 +1,10 @@
+MPDC TAN / Cargo Booking
+TAN operation failed
+
+An operation could not be completed. Please investigate the details below.
+
+Worker or operation: {{operation}}
+Affected business or file reference: {{reference}}
+Failure details safe for email: {{errorSummary}}
+
+This is an automated notification. Please do not reply.

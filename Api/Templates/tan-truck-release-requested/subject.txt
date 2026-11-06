@@ -1,1 +1,1 @@
-TAN - Truck {{registrationNumber}} release requested
+Tan truck release requested — {{tanId}}

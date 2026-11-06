@@ -1,0 +1,19 @@
+{
+  "id": "payment-confirmed",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Payment confirmed",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs",
+  "variables": {
+    "customerName": {
+      "description": "Customer",
+      "example": "Example Cargo"
+    },
+    "paymentReference": {
+      "description": "Payment reference",
+      "example": "PAY-104"
+    }
+  }
+}

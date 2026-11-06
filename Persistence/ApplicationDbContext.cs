@@ -1,43 +1,25 @@
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 using Application.Common.Interfaces;
-using Application.Common.Security;
-using Domain.Common;
 using Domain.Entities;
-using Domain.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Persistence;
 
-public class ApplicationDbContext(
-    DbContextOptions<ApplicationDbContext> options,
-    IDateTime dateTime,
-    ICurrentUserService currentUserService)
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : DbContext(options), IApplicationDbContext
 {
-    public DbSet<User> Users => Set<User>();
-
-    public DbSet<Role> Roles => Set<Role>();
-
     public DbSet<NotificationAttachment> NotificationAttachments => Set<NotificationAttachment>();
 
     public DbSet<EmailNotification> EmailNotifications => Set<EmailNotification>();
-    public DbSet<DeliveryAttempt> DeliveryAttempts => Set<DeliveryAttempt>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
-    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
-    public DbSet<NotificationReplay> NotificationReplays => Set<NotificationReplay>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        // BaseEntity exposes DomainEvents for in-memory dispatch only - never persisted.
-        builder.Ignore<DomainEvent>();
-
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
         // SQLite cannot translate comparisons or ordering for DateTimeOffset values.
-        // Store them as UTC ticks locally so worker scheduling queries remain server-side.
+        // Keep the existing binary representation locally so due-time queries remain server-side.
         if (Database.IsSqlite())
         {
             var converter = new DateTimeOffsetToBinaryConverter();
@@ -54,43 +36,5 @@ public class ApplicationDbContext(
         base.OnModelCreating(builder);
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        UpdateAuditableEntities();
-
-        return base.SaveChangesAsync(cancellationToken);
-    }
-
-    public override int SaveChanges()
-    {
-        UpdateAuditableEntities();
-
-        return base.SaveChanges();
-    }
-
     public void ClearTrackedChanges() => ChangeTracker.Clear();
-
-    private void UpdateAuditableEntities()
-    {
-        var now = dateTime.Now;
-        var userId = currentUserService.UserId ?? "anonymous";
-
-        foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
-        {
-            switch (entry.State)
-            {
-                case EntityState.Added:
-                    entry.Entity.Created = now;
-                    entry.Entity.CreatedBy = userId;
-                    entry.Entity.LastModified = now;
-                    entry.Entity.LastModifiedBy = userId;
-                    break;
-
-                case EntityState.Modified:
-                    entry.Entity.LastModified = now;
-                    entry.Entity.LastModifiedBy = userId;
-                    break;
-            }
-        }
-    }
 }

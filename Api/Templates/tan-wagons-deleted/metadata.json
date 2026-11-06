@@ -1,0 +1,27 @@
+{
+  "id": "tan-wagons-deleted",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Rail wagons deleted",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Application/RAN/DeleteRailOrderDetail.cs",
+  "variables": {
+    "orderNumber": {
+      "description": "Rail order",
+      "example": "RAIL-204"
+    },
+    "consignmentNumber": {
+      "description": "Consignment",
+      "example": "CON-104"
+    },
+    "wagonDetails": {
+      "description": "Wagon numbers, cargo, customer, masses and operation details",
+      "example": "WG-101; Coal; Example Cargo; nett 60000 kg"
+    },
+    "changedBy": {
+      "description": "Submitted or changed by",
+      "example": "Example Agent"
+    }
+  }
+}

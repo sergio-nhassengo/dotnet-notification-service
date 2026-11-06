@@ -3,7 +3,7 @@
   "applications": [
     "tan-webservice"
   ],
-  "title": "SEW integration failure",
+  "title": "Tan sew integration failed",
   "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/API/Workers/SewSFTP",
   "variables": {

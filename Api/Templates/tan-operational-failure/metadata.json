@@ -1,0 +1,23 @@
+{
+  "id": "tan-operational-failure",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "TAN operation failed",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/API/Workers; weighbridge-tan-webservice/Infrastructure/Services/GateOneService.cs; weighbridge-tan-webservice/Infrastructure/Services/Sftp/SftpService.cs; weighbridge-tan-webservice/Infrastructure/Services/DeleteLocalFile/DeleteLocalFileService.cs; weighbridge-tan-webservice/Infrastructure/Services/Km4and7/Km4And7ProcessService.cs; weighbridge-tan-webservice/Infrastructure/Services/StandardBank/StandardBankIntegratorService.cs",
+  "variables": {
+    "operation": {
+      "description": "Worker or operation",
+      "example": "Receipt ticket delivery"
+    },
+    "reference": {
+      "description": "Affected business or file reference",
+      "example": "Receipt 12345"
+    },
+    "errorSummary": {
+      "description": "Failure details safe for email",
+      "example": "The report server could not be reached."
+    }
+  }
+}

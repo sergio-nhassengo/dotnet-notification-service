@@ -1,4 +1,5 @@
-TAN trips history for customs
+MPDC TAN / Cargo Booking
+Tan trips history report
 
 Please find attached the TAN trips history report for customs.
 
@@ -6,4 +7,4 @@ Reporting period: {{reportPeriod}}
 Generated at: {{generatedAt}}
 Summary: {{summary}}
 
-Review the attached trips history for the stated period.
+This is an automated notification. Please do not reply.

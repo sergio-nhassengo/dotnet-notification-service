@@ -1,4 +1,5 @@
-TIP payment confirmed
+MPDC TAN / Cargo Booking
+Tan tip payment confirmed
 
 The TIP payment has been confirmed by the bank.
 
@@ -15,4 +16,4 @@ Payment reference: {{paymentReference}}
 Amount: {{amount}}
 Currency: {{currency}}
 
-Review the updated declaration and payment record in TAN.
+This is an automated notification. Please do not reply.

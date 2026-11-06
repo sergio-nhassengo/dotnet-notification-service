@@ -1,3 +1,5 @@
+using Domain.Enums;
+
 namespace Application.Common.Retry;
 
 public sealed class RetryPolicy
@@ -9,6 +11,9 @@ public sealed class RetryPolicy
         TimeSpan.FromMinutes(15),
         TimeSpan.FromHours(1)
     ];
+
+    public static bool IsRetryable(EmailFailureCategory failureCategory) =>
+        failureCategory is EmailFailureCategory.Transient or EmailFailureCategory.RateLimited;
 
     public bool HasAttemptsRemaining(
         int failedAttemptNumber,

@@ -1,0 +1,1 @@
+Border arrival: driver assigned to other trucks — {{tanId}}

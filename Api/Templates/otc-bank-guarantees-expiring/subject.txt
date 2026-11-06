@@ -1,1 +1,0 @@
-OTC - Bank guarantees expiring within {{expiryWindowDays}} days

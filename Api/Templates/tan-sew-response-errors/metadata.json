@@ -1,0 +1,19 @@
+{
+  "id": "tan-sew-response-errors",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "SEW response errors",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/API/Workers/SewSFTP/SewIntegrationErrorsDownloadWorker.cs",
+  "variables": {
+    "fileName": {
+      "description": "Response file",
+      "example": "response-104.xml"
+    },
+    "errorDetails": {
+      "description": "Errors and associated TAN, truck and transporter details",
+      "example": "TAN-1204; AAA-123-MP; invalid declaration details"
+    }
+  }
+}

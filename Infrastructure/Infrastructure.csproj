@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -8,48 +8,25 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <!-- Needed to compile against ASP.NET Core auth/CORS APIs (AddAuthentication, AddAuthorizationBuilder,
-           AddCors) from this class library, since they ship in the shared framework, not a NuGet package. -->
-      <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Content Include="..\.dockerignore">
         <Link>.dockerignore</Link>
       </Content>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Extensions\Auth\" />
-      <Folder Include="Extensions\Cors\" />
-      <Folder Include="Extensions\Logs\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
       <PackageReference Include="Confluent.Kafka" Version="2.12.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
-      <PackageReference Include="OpenTelemetry" Version="1.17.0" />
-      <PackageReference Include="OpenTelemetry.AutoInstrumentation" Version="1.16.0" />
-      <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.17.0" />
-      <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
-      <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.17.0-beta.1" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.Hangfire" Version="1.17.0-beta.1" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.17.0" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.17.0" />
-      <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
-      <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
-      <PackageReference Include="Serilog.Enrichers.Process" Version="3.0.0" />
-      <PackageReference Include="Serilog.Enrichers.Span" Version="3.1.0" />
-      <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
-      <PackageReference Include="Serilog.Sinks.EventLog" Version="5.0.0-dev-00091" />
+      <!-- Deliberately no ASP.NET Core reference: HTTP and authentication concerns live in Api. -->
+      <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.11" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11" />
+      <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.11" />
+      <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.11" />
+      <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
       <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-      <PackageReference Include="Serilog.Sinks.Grafana.Loki" Version="9.0.2" />
+      <!-- Pinned above Microsoft.Data.SqlClient's minimum to fix CVE-2026-84008 (GHSA-846f-f764-76mx) and
+           CVE-2026-70162 (GHSA-2fmv-rv2c-59x7); patched in 10.0.13. Remove once SqlClient depends on a patched version. -->
+      <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
       <PackageReference Include="Serilog.Sinks.MSSqlServer" Version="10.0.0" />
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
     </ItemGroup>
 
     <ItemGroup>

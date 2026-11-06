@@ -1,0 +1,19 @@
+{
+  "id": "tan-duplicate-payment-references",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Duplicate payment references",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/API/Workers/SewSFTP/SewDeclarationWorker.cs; weighbridge-tan-webservice/Application/Sew/Payments/PostSewIntegrationPayment.cs",
+  "variables": {
+    "sourceReference": {
+      "description": "Source file or request reference",
+      "example": "incoming-104.xml"
+    },
+    "duplicateDetails": {
+      "description": "Duplicate identifiers and associated truck, TAN and declaration details",
+      "example": "TAN-1204; AAA-123-MP; DEC-104; PAY-104"
+    }
+  }
+}

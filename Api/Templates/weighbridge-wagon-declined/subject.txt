@@ -1,1 +1,0 @@
-Rail - Wagon {{wagonNumber}} declined

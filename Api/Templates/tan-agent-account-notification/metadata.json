@@ -1,0 +1,27 @@
+{
+  "id": "tan-agent-account-notification",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Agent account notification",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Application/User/NotifyAgentAccounts.cs",
+  "variables": {
+    "fullName": {
+      "description": "Account holder",
+      "example": "Example User"
+    },
+    "username": {
+      "description": "Username",
+      "example": "example.user"
+    },
+    "password": {
+      "description": "Initial or reset password (sensitive)",
+      "example": "EXAMPLE-ONLY-ChangeMe"
+    },
+    "loginUrl": {
+      "description": "Cargo Booking address",
+      "example": "https://tan.portmaputo.com"
+    }
+  }
+}

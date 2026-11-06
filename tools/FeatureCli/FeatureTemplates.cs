@@ -122,6 +122,10 @@ internal static class FeatureTemplates
             : "\n" + string.Join("\n\n", properties.Select(p =>
                 $"    public {p.Type} {p.Name} {{ get; init; }}{(p.IsNonNullableString ? " = string.Empty;" : "")}"));
 
+        // Expression-based projection so EF Core translates it to a SELECT of only the mapped columns.
+        var projectionAssignments = string.Join(",\n", new[] { "        Id = x.Id" }
+            .Concat(properties.Select(p => $"        {p.Name} = x.{p.Name}")));
+
         return
         [
             ("Commands", createName,
@@ -253,8 +257,6 @@ internal static class FeatureTemplates
                 ($"{getByIdName}Query.cs", $$"""
                 using {{rootNamespace}}.Features.{{feature}}.Queries.{{getAllName}};
                 using {{dbContextNamespace}};
-                using AutoMapper;
-                using AutoMapper.QueryableExtensions;
                 using Domain.Common;
                 using MediatR;
                 using Microsoft.EntityFrameworkCore;
@@ -263,14 +265,14 @@ internal static class FeatureTemplates
 
                 public record {{getByIdName}}Query({{keyType}} Id) : IRequest<Result<{{entity}}Dto>>;
 
-                public class {{getByIdName}}QueryHandler({{dbContextType}} context, IConfigurationProvider mapperConfiguration)
+                public class {{getByIdName}}QueryHandler({{dbContextType}} context)
                     : IRequestHandler<{{getByIdName}}Query, Result<{{entity}}Dto>>
                 {
                     public async Task<Result<{{entity}}Dto>> Handle({{getByIdName}}Query request, CancellationToken cancellationToken)
                     {
                         var result = await context.{{plural}}
                             .Where(x => x.Id == request.Id)
-                            .ProjectTo<{{entity}}Dto>(mapperConfiguration)
+                            .Select({{entity}}Dto.Projection)
                             .FirstOrDefaultAsync(cancellationToken);
 
                         return result is null
@@ -285,8 +287,6 @@ internal static class FeatureTemplates
             [
                 ($"{getAllName}Query.cs", $$"""
                 using {{dbContextNamespace}};
-                using AutoMapper;
-                using AutoMapper.QueryableExtensions;
                 using Domain.Common;
                 using MediatR;
                 using Microsoft.EntityFrameworkCore;
@@ -295,13 +295,13 @@ internal static class FeatureTemplates
 
                 public record {{getAllName}}Query : IRequest<Result<List<{{entity}}Dto>>>;
 
-                public class {{getAllName}}QueryHandler({{dbContextType}} context, IConfigurationProvider mapperConfiguration)
+                public class {{getAllName}}QueryHandler({{dbContextType}} context)
                     : IRequestHandler<{{getAllName}}Query, Result<List<{{entity}}Dto>>>
                 {
                     public async Task<Result<List<{{entity}}Dto>>> Handle({{getAllName}}Query request, CancellationToken cancellationToken)
                     {
                         var result = await context.{{plural}}{{orderBy}}
-                            .ProjectTo<{{entity}}Dto>(mapperConfiguration)
+                            .Select({{entity}}Dto.Projection)
                             .ToListAsync(cancellationToken);
 
                         return result;
@@ -310,7 +310,7 @@ internal static class FeatureTemplates
 
                 """),
                 ($"{entity}Dto.cs", $$"""
-                using AutoMapper;
+                using System.Linq.Expressions;
 
                 namespace {{rootNamespace}}.Features.{{feature}}.Queries.{{getAllName}};
 
@@ -319,13 +319,10 @@ internal static class FeatureTemplates
                     public {{keyType}} Id { get; init; }
                 {{dtoProps}}
 
-                    private class Mapping : Profile
+                    public static Expression<Func<{{entityNamespace}}.{{entity}}, {{entity}}Dto>> Projection => x => new {{entity}}Dto
                     {
-                        public Mapping()
-                        {
-                            CreateMap<{{entityNamespace}}.{{entity}}, {{entity}}Dto>();
-                        }
-                    }
+                {{projectionAssignments}}
+                    };
                 }
 
                 """)

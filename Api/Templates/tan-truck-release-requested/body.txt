@@ -1,4 +1,5 @@
-Truck release awaiting Operations review
+MPDC TAN / Cargo Booking
+Tan truck release requested
 
 The agent has submitted a truck release. Operations approval is still required.
 
@@ -17,4 +18,4 @@ Original hold reason: {{reason}}
 Agent comment: {{agentComment}}
 Agent release submitted at: {{releasedAt}}
 
-Operations must review the release in Weighbridge and record an approval or rejection.
+This is an automated notification. Please do not reply.

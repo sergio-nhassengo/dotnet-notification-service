@@ -17,7 +17,10 @@ public static class DependencyInjection
         {
             if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
             {
-                options.UseSqlite(connectionString);
+                // The shared migration snapshot is generated with SQL Server. SQLite uses
+                // binary DateTimeOffset conversions and explicit provider-specific migration SQL.
+                options.UseSqlite(connectionString).ConfigureWarnings(w =>
+                    w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
                 return;
             }
 

@@ -6,12 +6,8 @@ public sealed class EmailProviderOptionsValidator : IValidateOptions<EmailProvid
 {
     public ValidateOptionsResult Validate(string? name, EmailProviderOptions o)
     {
-        if (!new[] { "Fake", "Brevo", "Smtp" }.Contains(o.Provider, StringComparer.OrdinalIgnoreCase))
-            return ValidateOptionsResult.Fail("EmailProvider:Provider must be Fake, Brevo or Smtp.");
-        if (o.Provider.Equals("Brevo", StringComparison.OrdinalIgnoreCase) && (string.IsNullOrWhiteSpace(o.ApiKey) || string.IsNullOrWhiteSpace(o.BaseUrl)))
-            return ValidateOptionsResult.Fail("Brevo requires EmailProvider:ApiKey and EmailProvider:BaseUrl.");
-        if (o.AllowedSenderEmails.Length > 0 && !o.AllowedSenderEmails.Contains(o.DefaultSenderEmail, StringComparer.OrdinalIgnoreCase))
-            return ValidateOptionsResult.Fail("EmailProvider:DefaultSenderEmail must be allow-listed.");
+        if (!new[] { "Smtp", "SmtpRelay" }.Contains(o.Provider, StringComparer.OrdinalIgnoreCase))
+            return ValidateOptionsResult.Fail("EmailProvider:Provider must be Smtp or SmtpRelay.");
         return ValidateOptionsResult.Success;
     }
 }

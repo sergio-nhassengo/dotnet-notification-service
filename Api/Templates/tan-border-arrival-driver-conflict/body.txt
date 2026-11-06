@@ -1,0 +1,13 @@
+MPDC TAN / Cargo Booking
+Border arrival: driver assigned to other trucks
+
+Border arrival has been confirmed. The same driver is associated with other TAN records; review the details below.
+
+TAN: {{tanId}}
+Arriving truck: {{registrationNumber}}
+Border arrival at: {{borderArrivalAt}}
+Driver: {{driverName}}
+Driver passport: {{driverPassport}}
+Other TANs and truck details: {{otherTrucks}}
+
+This is an automated notification. Please do not reply.

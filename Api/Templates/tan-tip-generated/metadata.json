@@ -3,7 +3,7 @@
   "applications": [
     "tan-webservice"
   ],
-  "title": "TIP generated",
+  "title": "Tan tip generated",
   "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/TipNotificationService.cs",
   "variables": {

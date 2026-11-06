@@ -3,7 +3,7 @@
   "applications": [
     "tan-webservice"
   ],
-  "title": "TIP payment submitted",
+  "title": "Tan tip payment submitted",
   "minimumAttachments": 0,
   "source": "weighbridge-tan-webservice/Infrastructure/Services/StandardBank/StandardBankIntegratorService.cs",
   "variables": {

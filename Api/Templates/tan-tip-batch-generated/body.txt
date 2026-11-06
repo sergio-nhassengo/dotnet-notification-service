@@ -1,0 +1,10 @@
+MPDC TAN / Cargo Booking
+TIP generation notification
+
+Review the generated TIP declarations and payment instructions below.
+
+Transporter: {{transporterName}}
+Payment requirement and instructions: {{paymentInstructions}}
+TANs, trucks, declarations, payment references, amounts and expiry dates: {{tipDetails}}
+
+This is an automated notification. Please do not reply.

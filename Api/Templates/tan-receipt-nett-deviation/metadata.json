@@ -1,0 +1,87 @@
+{
+  "id": "tan-receipt-nett-deviation",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "Receipt nett deviation",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/ReceiptTransactionNotification.cs",
+  "variables": {
+    "transactionId": {
+      "description": "Receipt transaction",
+      "example": "12345"
+    },
+    "orderNumber": {
+      "description": "Order",
+      "example": "ORD-204"
+    },
+    "customerName": {
+      "description": "Customer",
+      "example": "Example Cargo"
+    },
+    "commodity": {
+      "description": "Commodity",
+      "example": "Coal"
+    },
+    "parcelNumber": {
+      "description": "Parcel",
+      "example": "PAR-102"
+    },
+    "destination": {
+      "description": "Destination",
+      "example": "Terminal 1"
+    },
+    "transporterName": {
+      "description": "Transporter",
+      "example": "Example Transporter"
+    },
+    "registrationNumber": {
+      "description": "Truck",
+      "example": "AAA-123-MP"
+    },
+    "trailer1": {
+      "description": "Trailer 1",
+      "example": "TRL-101"
+    },
+    "trailer2": {
+      "description": "Trailer 2",
+      "example": "Not applicable"
+    },
+    "mineMassKg": {
+      "description": "Mine mass (kg)",
+      "example": "30000"
+    },
+    "mineTicketNumber": {
+      "description": "Mine ticket",
+      "example": "MT-204"
+    },
+    "entryAt": {
+      "description": "First weighing at",
+      "example": "11 Sep 2026 10:00 CAT"
+    },
+    "exitAt": {
+      "description": "Second weighing at",
+      "example": "11 Sep 2026 10:30 CAT"
+    },
+    "grossKg": {
+      "description": "Gross mass (kg)",
+      "example": "48000"
+    },
+    "tareKg": {
+      "description": "Tare mass (kg)",
+      "example": "18500"
+    },
+    "nettKg": {
+      "description": "Nett mass (kg)",
+      "example": "29500"
+    },
+    "deviationKg": {
+      "description": "Absolute deviation (kg)",
+      "example": "500"
+    },
+    "thresholdKg": {
+      "description": "Customer threshold (kg)",
+      "example": "300"
+    }
+  }
+}

@@ -1,16 +1,14 @@
-
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Application.Common.Behaviours;
-using Application.Common.Security;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Application.Notifications.Abstractions;
 
 
 public class LoggingBehaviour<TRequest, TResponse>(
     ILogger<LoggingBehaviour<TRequest, TResponse>> logger,
-    ICurrentUserService currentUserService)
+    INotificationCaller caller)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
@@ -18,15 +16,18 @@ public class LoggingBehaviour<TRequest, TResponse>(
     {
         if (typeof(TRequest).Namespace?.Contains(".Features.Notifications.", StringComparison.Ordinal) == true)
         {
-            logger.LogInformation("Handling {RequestName} for user {UserId}", typeof(TRequest).Name, currentUserService.UserId ?? "anonymous");
+            logger.LogInformation("Handling {RequestName} for application {ApplicationId}", typeof(TRequest).Name, ApplicationId);
             return next();
         }
         logger.LogInformation(
-            "Handling {RequestName} for user {UserId}: {@Request}",
+            "Handling {RequestName} for application {ApplicationId}: {@Request}",
             typeof(TRequest).Name,
-            currentUserService.UserId ?? "anonymous",
+            ApplicationId,
             request);
 
         return next();
     }
+
+    // Background workers run outside an HTTP request, so there is no authenticated application.
+    private string ApplicationId => string.IsNullOrEmpty(caller.ApplicationId) ? "anonymous" : caller.ApplicationId;
 }

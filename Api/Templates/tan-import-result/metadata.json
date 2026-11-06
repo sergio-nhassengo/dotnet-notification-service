@@ -1,0 +1,23 @@
+{
+  "id": "tan-import-result",
+  "applications": [
+    "tan-webservice"
+  ],
+  "title": "TAN import result",
+  "minimumAttachments": 0,
+  "source": "weighbridge-tan-webservice/Infrastructure/Services/TanService.cs",
+  "variables": {
+    "fileName": {
+      "description": "Import file",
+      "example": "tans-20260911.xlsx"
+    },
+    "successDetails": {
+      "description": "Successfully imported records",
+      "example": "TAN-1204; AAA-123-MP"
+    },
+    "errorDetails": {
+      "description": "Rejected records and reasons",
+      "example": "Row 3: missing order number"
+    }
+  }
+}

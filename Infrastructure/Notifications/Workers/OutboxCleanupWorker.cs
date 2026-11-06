@@ -1,11 +1,11 @@
 using Application.Common.Interfaces;
-using Application.Features.Notifications.Commands.Outbox;
+using Application.Features.Notifications.Commands.CleanupProcessedOutbox;
 using Infrastructure.Notifications.Options;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using MediatR;
 
 namespace Infrastructure.Notifications.Workers;
 

@@ -1,0 +1,23 @@
+MPDC TAN / Cargo Booking
+Truck release: Operations review required
+
+The agent has submitted a truck release. Operations approval is still required.
+
+Truck: {{registrationNumber}}
+TAN: {{tanId}}
+Order: {{orderNumber}}
+Trailer 1: {{trailer1}}
+Trailer 2: {{trailer2}}
+Customer: {{customerName}}
+Commodity: {{commodity}}
+Destination / slab: {{destination}}
+Mine ticket: {{mineTicketNumber}}
+Mine gross mass (kg): {{mineGrossMass}}
+First mass (kg): {{grossMass}}
+Original hold reason: {{reason}}
+Agent comment: {{agentComment}}
+Agent release submitted at: {{releasedAt}}
+
+Operations review address: {{tallyUrl}}
+
+This is an automated notification. Please do not reply.

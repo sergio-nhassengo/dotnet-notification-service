@@ -1,12 +1,11 @@
 {
   "id": "rail-consignment-alert",
   "applications": [
-    "weighbridge-api",
     "tan-webservice"
   ],
   "title": "Rail consignment alert",
   "minimumAttachments": 0,
-  "source": "weighbridge-web-api/WeighBridgeWeAPI/Application/RAN/RailConsignments/NotifyAgent.cs; weighbridge-tan-webservice/Application/RAN/RailConsignments/ReceiveRailConsignment.cs",
+  "source": "weighbridge-tan-webservice/Application/RAN/RailConsignments/ReceiveRailConsignment.cs",
   "variables": {
     "consignmentNumber": {
       "description": "Consignment",

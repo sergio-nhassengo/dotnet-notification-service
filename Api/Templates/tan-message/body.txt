@@ -1,0 +1,9 @@
+MPDC TAN / Cargo Booking
+TAN notification
+
+Please review the message below.
+
+Message title: {{title}}
+Message in plain text: {{message}}
+
+This is an automated notification. Please do not reply.

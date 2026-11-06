@@ -1,0 +1,9 @@
+MPDC TAN / Cargo Booking
+SEW response errors
+
+SEW returned errors for the records below. Review and correct the affected truck details.
+
+Response file: {{fileName}}
+Errors and associated TAN, truck and transporter details: {{errorDetails}}
+
+This is an automated notification. Please do not reply.
